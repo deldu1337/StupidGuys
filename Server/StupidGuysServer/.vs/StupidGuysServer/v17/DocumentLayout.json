@@ -1,0 +1,85 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|c:\\unity\\team2\\server\\stupidguysserver\\stupidguysserver\\models\\lobby.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|solutionrelative:stupidguysserver\\models\\lobby.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|c:\\unity\\team2\\server\\stupidguysserver\\stupidguysserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|solutionrelative:stupidguysserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|c:\\unity\\team2\\server\\stupidguysserver\\stupidguysserver\\services\\lobbiesmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|solutionrelative:stupidguysserver\\services\\lobbiesmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|c:\\unity\\team2\\server\\stupidguysserver\\stupidguysserver\\hubs\\matchmakinghub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{395CFCDB-372F-484C-A594-37415FBF0D58}|StupidGuysServer\\StupidGuysServer.csproj|solutionrelative:stupidguysserver\\hubs\\matchmakinghub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MatchmakingHub.cs",
+              "DocumentMoniker": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Hubs\\MatchmakingHub.cs",
+              "RelativeDocumentMoniker": "StupidGuysServer\\Hubs\\MatchmakingHub.cs",
+              "ToolTip": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Hubs\\MatchmakingHub.cs",
+              "RelativeToolTip": "StupidGuysServer\\Hubs\\MatchmakingHub.cs",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAowGoAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-29T05:11:08.922Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Lobby.cs",
+              "DocumentMoniker": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Models\\Lobby.cs",
+              "RelativeDocumentMoniker": "StupidGuysServer\\Models\\Lobby.cs",
+              "ToolTip": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Models\\Lobby.cs",
+              "RelativeToolTip": "StupidGuysServer\\Models\\Lobby.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAkwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-29T05:10:45.133Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "LobbiesManager.cs",
+              "DocumentMoniker": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Services\\LobbiesManager.cs",
+              "RelativeDocumentMoniker": "StupidGuysServer\\Services\\LobbiesManager.cs",
+              "ToolTip": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Services\\LobbiesManager.cs",
+              "RelativeToolTip": "StupidGuysServer\\Services\\LobbiesManager.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-29T05:10:41.292Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Program.cs",
+              "RelativeDocumentMoniker": "StupidGuysServer\\Program.cs",
+              "ToolTip": "C:\\Unity\\Team2\\Server\\StupidGuysServer\\StupidGuysServer\\Program.cs",
+              "RelativeToolTip": "StupidGuysServer\\Program.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAwAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-26T04:30:12.585Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
