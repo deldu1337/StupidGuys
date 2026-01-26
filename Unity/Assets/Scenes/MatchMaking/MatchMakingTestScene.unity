@@ -5709,7 +5709,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7de5cbad3109ca948bff18928c9090cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchmakingClient
-  serverUrl: https://stupidguysserver.onrender.com/matchmaking
+  serverUrl: http://localhost:10000/matchmaking
   maxPlayers: 6
 --- !u!1001 &1941099622
 PrefabInstance:

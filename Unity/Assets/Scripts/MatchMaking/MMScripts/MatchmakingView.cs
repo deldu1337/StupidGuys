@@ -51,6 +51,7 @@ public class MatchmakingView : MonoBehaviour
         if (client != null)
         {
             client.OnLobbyUpdated += OnLobbyUpdated;
+            client.OnMatchAllocated += OnMatchAllocated;
             client.OnError += OnError;
             client.OnConnected += OnConnected;
             client.OnDisconnected += OnDisconnected;
@@ -87,15 +88,6 @@ public class MatchmakingView : MonoBehaviour
         {
             _matchResult = result;
             UpdateStatus($"Joined lobby #{result.LobbyId}");
-
-            Debug.Log($"[MatchmakingView] Game Server: {result.GameServerIP}:{result.GameServerPort}");
-
-            PlayerPrefs.SetString("GameServerIP", result.GameServerIP);
-            PlayerPrefs.SetInt("GameServerPort", result.GameServerPort);
-            PlayerPrefs.SetInt("LobbyId", result.LobbyId);
-            PlayerPrefs.Save();
-
-            Debug.Log("[MatchmakingView] Server info saved to PlayerPrefs");
         }
         else
         {
@@ -127,41 +119,34 @@ public class MatchmakingView : MonoBehaviour
 
         UpdateLobbyInfo($"Players: {status.CurrentPlayers}/{status.MaxPlayers}");
 
-        if (status.IsFull)
-        {
-            UpdateStatus("Lobby is full! Starting game...");
-            OnMatchFound(status);
-        }
-        else
-        {
-            UpdateStatus($"Waiting for players... ({status.CurrentPlayers}/{status.MaxPlayers})");
-        }
+        UpdateStatus($"Waiting for players... ({status.CurrentPlayers}/{status.MaxPlayers})");
     }
 
-    private void OnMatchFound(LobbyStatusData status)
+    private void OnMatchAllocated(MatchmakingResultData result)
     {
-        Debug.Log($"[UI] Match found! Lobby {status.Id} is full");
+        Debug.Log($"[UI] Match allocated! Lobby {result.LobbyId}");
 
-        bool isServer = MultiplayerRolesManager.ActiveMultiplayerRoleMask.HasFlag(MultiplayerRoleFlags.Server);
-
-        string serverIP = PlayerPrefs.GetString("GameServerIP", "");
-        int serverPort = PlayerPrefs.GetInt("GameServerPort", 0);
-
-        if (string.IsNullOrEmpty(serverIP) || serverPort == 0)
+        if (string.IsNullOrEmpty(result.GameServerIP) || result.GameServerPort == 0)
         {
-            Debug.LogError("[MatchmakingView] No server info in PlayerPrefs!");
+            Debug.LogError("[MatchmakingView] No server info in allocation result!");
             UpdateStatus("Error: No server info");
             return;
         }
 
-        Debug.Log($"[MatchmakingView] Loading game with server: {serverIP}:{serverPort}");
+        PlayerPrefs.SetString("GameServerIP", result.GameServerIP);
+        PlayerPrefs.SetInt("GameServerPort", result.GameServerPort);
+        PlayerPrefs.SetInt("LobbyId", result.LobbyId);
+        PlayerPrefs.Save();
+
+        Debug.Log($"[MatchmakingView] Loading game with server: {result.GameServerIP}:{result.GameServerPort}");
 
         UpdateStatus("Match found! Loading game...");
-        UpdateLobbyInfo($"Lobby #{status.Id} - Full!");
+        UpdateLobbyInfo($"Lobby #{result.LobbyId} - Ready!");
 
         if (client != null)
         {
             client.OnLobbyUpdated -= OnLobbyUpdated;
+            client.OnMatchAllocated -= OnMatchAllocated;
             client.OnError -= OnError;
             client.OnConnected -= OnConnected;
             client.OnDisconnected -= OnDisconnected;
@@ -232,6 +217,7 @@ public class MatchmakingView : MonoBehaviour
         if (client != null)
         {
             client.OnLobbyUpdated -= OnLobbyUpdated;
+            client.OnMatchAllocated -= OnMatchAllocated;
             client.OnError -= OnError;
             client.OnConnected -= OnConnected;
             client.OnDisconnected -= OnDisconnected;

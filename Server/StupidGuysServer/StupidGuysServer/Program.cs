@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using StupidGuysServer.Configuration;
 using StupidGuysServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<LobbiesManager>();
+builder.Services.AddSingleton(GameServerSettings.FromEnvironment());
+builder.Services.AddSingleton(MatchmakingSettings.FromEnvironment());
+builder.Services.AddSingleton(provider =>
+{
+    var settings = provider.GetRequiredService<MatchmakingSettings>();
+    return new GameServerAllocator(settings.PortRangeStart, settings.PortRangeEnd);
+});
 
 builder.Services.AddCors(options =>
 {
