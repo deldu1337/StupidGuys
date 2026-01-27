@@ -1,0 +1,15 @@
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.exe
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\web.config
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\web.config
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\StupidGuysServer.deps.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\StupidGuysServer.runtimeconfig.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\StupidGuysServer.deps.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\StupidGuysServer.runtimeconfig.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.dll
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.deps.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.runtimeconfig.json
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.pdb
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\Newtonsoft.Json.dll
+C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\System.Net.WebSockets.WebSocketProtocol.dll

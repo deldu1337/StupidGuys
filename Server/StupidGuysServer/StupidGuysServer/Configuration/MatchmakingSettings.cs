@@ -23,7 +23,7 @@ namespace StupidGuysServer.Configuration
             var portStartValue = Environment.GetEnvironmentVariable("ALLOCATION_PORT_START");
             var portEndValue = Environment.GetEnvironmentVariable("ALLOCATION_PORT_END");
             var portStart = int.TryParse(portStartValue, out var parsedPortStart) ? parsedPortStart : 7778;
-            var portEnd = int.TryParse(portEndValue, out var parsedPortEnd) ? parsedPortEnd : 7798;
+            var portEnd = int.TryParse(portEndValue, out var parsedPortEnd) ? parsedPortEnd : 7779;
 
             if (portEnd < portStart)
             {
