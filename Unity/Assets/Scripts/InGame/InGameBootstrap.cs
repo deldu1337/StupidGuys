@@ -8,6 +8,10 @@ using System.Linq;
 
 public class InGameBootstrap : MonoBehaviour
 {
+    private const string GameServerHostEnv = "GAME_SERVER_HOST";
+    private const string GameServerPortEnv = "GAME_SERVER_PORT";
+    private const string UsePlayFabEnv = "USE_PLAYFAB_GSDK";
+
     private bool _isPlayFabServer = false;
 
     private void Start()
@@ -20,7 +24,7 @@ public class InGameBootstrap : MonoBehaviour
 
         if (isServer && !isClient)
         {
-            StartPlayFabServer();
+            StartDedicatedServer();
         }
         else if (isClient)
         {
@@ -31,7 +35,7 @@ public class InGameBootstrap : MonoBehaviour
 
     if (Application.isBatchMode)
     {
-        StartPlayFabServer();
+        StartDedicatedServer();
     }
     else
     {
@@ -50,6 +54,42 @@ public class InGameBootstrap : MonoBehaviour
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         transport.SetConnectionData(serverIP, (ushort)serverPort);
         NetworkManager.Singleton.StartClient();
+    }
+
+    private void StartDedicatedServer()
+    {
+        if (ShouldUsePlayFabGSDK())
+        {
+            StartPlayFabServer();
+            return;
+        }
+
+        StartStandaloneServer();
+    }
+
+    private bool ShouldUsePlayFabGSDK()
+    {
+        var usePlayFabValue = System.Environment.GetEnvironmentVariable(UsePlayFabEnv);
+        if (string.IsNullOrWhiteSpace(usePlayFabValue))
+        {
+            return false;
+        }
+
+        return usePlayFabValue.Equals("1") ||
+               usePlayFabValue.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void StartStandaloneServer()
+    {
+        var host = System.Environment.GetEnvironmentVariable(GameServerHostEnv) ?? "0.0.0.0";
+        var portValue = System.Environment.GetEnvironmentVariable(GameServerPortEnv);
+        var port = ushort.TryParse(portValue, out var parsedPort) ? parsedPort : (ushort)7777;
+
+        Debug.Log($"[Bootstrap] Starting standalone server at {host}:{port}");
+
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        transport.SetConnectionData(host, port);
+        NetworkManager.Singleton.StartServer();
     }
 
     private void StartPlayFabServer()

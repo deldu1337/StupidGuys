@@ -12,7 +12,7 @@ namespace StupidGuysServer.Services
 
         public Lobby? FindAvailableLobby()
         {
-            return _lobbies.Values.FirstOrDefault(lobby => !lobby.IsFull);
+            return _lobbies.Values.FirstOrDefault(lobby => !lobby.IsFull && !lobby.IsMatchFinalized);
         }
 
         public Lobby CreateLobby(int maxPlayers)
@@ -39,6 +39,11 @@ namespace StupidGuysServer.Services
         {
             foreach (var lobby in _lobbies.Values)
             {
+                if (lobby.IsMatchFinalized)
+                {
+                    continue;
+                }
+
                 if (lobby.TryRemoveMember(connectionId, out int remainCount))
                 {
                     if (remainCount == 0)
@@ -49,6 +54,11 @@ namespace StupidGuysServer.Services
                 }
             }
             return null;
+        }
+
+        public bool RemoveLobby(int lobbyId)
+        {
+            return _lobbies.TryRemove(lobbyId, out _);
         }
     }
 }

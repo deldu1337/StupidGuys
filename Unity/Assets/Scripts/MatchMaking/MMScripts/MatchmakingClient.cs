@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 public class MatchmakingClient : MonoBehaviour
 {
+    private const string MatchmakingServerUrlEnv = "3.37.215.9";
+
     [SerializeField] private string serverUrl = "";
 
     [SerializeField] private int maxPlayers = 6;
@@ -15,6 +17,7 @@ public class MatchmakingClient : MonoBehaviour
     private int? _currentLobbyId;
 
     public event Action<LobbyStatusData> OnLobbyUpdated;
+    public event Action<MatchmakingResultData> OnMatchAllocated;
     public event Action<string> OnError;
     public event Action OnConnected;
     public event Action OnDisconnected;
@@ -23,6 +26,7 @@ public class MatchmakingClient : MonoBehaviour
 
     private void Awake()
     {
+        serverUrl = ResolveServerUrl();
         _connection = new HubConnectionBuilder()
             .WithUrl(serverUrl)
             .WithAutomaticReconnect()
@@ -35,6 +39,22 @@ public class MatchmakingClient : MonoBehaviour
         _connection.Reconnected += OnConnectionReconnected;
     }
 
+    private string ResolveServerUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(serverUrl))
+        {
+            return serverUrl;
+        }
+
+        var envUrl = Environment.GetEnvironmentVariable(MatchmakingServerUrlEnv);
+        if (!string.IsNullOrWhiteSpace(envUrl))
+        {
+            return envUrl;
+        }
+
+        return "http://3.37.215.9:10000/matchmaking";
+    }
+
     private void RegisterServerEvents()
     {
         _connection.On<LobbyStatusData>("LobbyUpdated", (status) =>
@@ -44,6 +64,26 @@ public class MatchmakingClient : MonoBehaviour
             UnityMainThreadDispatcher.Enqueue(() =>
             {
                 OnLobbyUpdated?.Invoke(status);
+            });
+        });
+
+        _connection.On<MatchmakingResultData>("MatchAllocated", (result) =>
+        {
+            Debug.Log($"[SignalR] Match allocated: {result.GameServerIP}:{result.GameServerPort}");
+
+            UnityMainThreadDispatcher.Enqueue(() =>
+            {
+                OnMatchAllocated?.Invoke(result);
+            });
+        });
+
+        _connection.On<string>("MatchmakingError", (message) =>
+        {
+            Debug.LogError($"[SignalR] Matchmaking error: {message}");
+
+            UnityMainThreadDispatcher.Enqueue(() =>
+            {
+                OnError?.Invoke(message);
             });
         });
     }
