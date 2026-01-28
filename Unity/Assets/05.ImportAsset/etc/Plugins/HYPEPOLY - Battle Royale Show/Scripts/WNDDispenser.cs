@@ -79,6 +79,13 @@ public class WNDDispenser : NetworkBehaviour
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
             return;
 
+        if (InGameManager.singleton == null)
+            return;
+
+        if (InGameManager.singleton.IsFrozen.Value ||
+            InGameManager.singleton.state.Value != InGameState.WaitUntilContentFinished)
+            return;
+
         double now = NetworkManager.Singleton.ServerTime.Time;
 
         if (nextFireTime.Value == 0)
@@ -149,4 +156,3 @@ public class WNDDispenser : NetworkBehaviour
    
 
 }
-
