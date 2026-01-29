@@ -20,7 +20,7 @@ public struct MatchInfo : INetworkSerializable
     public FixedString64Bytes title;
 
     /// <summary>
-    /// ¸ÅÄ¡ Á¤º¸¸¦ ³×Æ®¿öÅ©·Î µ¿±âÈ­ÇÏ±â À§ÇØ Á÷·ÄÈ­¿Í ¿ªÁ÷·ÄÈ­¸¦ ¼öÇàÇÑ´Ù
+    /// ë§¤ì¹˜ ì •ë³´ë¥¼ ë„¤íŠ¸ì›Œí¬ë¡œ ë™ê¸°í™”í•˜ê¸° ìœ„í•´ ì§ë ¬í™”ì™€ ì—­ì§ë ¬í™”ë¥¼ ìˆ˜í–‰í•œë‹¤
     /// </summary>
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -33,70 +33,70 @@ public class InGameManager : NetworkBehaviour
 {
     public static InGameManager singleton;
 
-    // ÇöÀç ÀÎ°ÔÀÓ ÁøÇà »óÅÂ¸¦ ³ªÅ¸³½´Ù
-    // ¼­¹ö¸¸ °ªÀ» º¯°æÇÒ ¼ö ÀÖ°í ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ ÀĞÀ» ¼ö ÀÖ´Ù
+    // í˜„ì¬ ì¸ê²Œì„ ì§„í–‰ ìƒíƒœë¥¼ ë‚˜íƒ€ë‚¸ë‹¤
+    // ì„œë²„ë§Œ ê°’ì„ ë³€ê²½í•  ìˆ˜ ìˆê³  ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ì½ì„ ìˆ˜ ìˆë‹¤
     public NetworkVariable<InGameState> state = new NetworkVariable<InGameState>(
         value: InGameState.None,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // ¸ÅÄ¡ÀÇ ±âº» Á¤º¸¸¦ ³×Æ®¿öÅ©·Î °øÀ¯ÇÑ´Ù
-    // ¼­¹ö¸¸ °ªÀ» º¯°æÇÒ ¼ö ÀÖ°í ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ ÀĞÀ» ¼ö ÀÖ´Ù
+    // ë§¤ì¹˜ì˜ ê¸°ë³¸ ì •ë³´ë¥¼ ë„¤íŠ¸ì›Œí¬ë¡œ ê³µìœ í•œë‹¤
+    // ì„œë²„ë§Œ ê°’ì„ ë³€ê²½í•  ìˆ˜ ìˆê³  ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ì½ì„ ìˆ˜ ìˆë‹¤
     public NetworkVariable<MatchInfo> matchInfo = new NetworkVariable<MatchInfo>(
         value: default,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // ÇöÀç Á¢¼ÓÇØ ÀÖ´Â Å¬¶óÀÌ¾ğÆ®µéÀÇ ¾ÆÀÌµğ ¸ñ·ÏÀ» °ü¸®ÇÑ´Ù
-    // ¼­¹ö°¡ ÀÛ¼ºÇÏ°í ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ ÀĞ´Â´Ù
+    // í˜„ì¬ ì ‘ì†í•´ ìˆëŠ” í´ë¼ì´ì–¸íŠ¸ë“¤ì˜ ì•„ì´ë”” ëª©ë¡ì„ ê´€ë¦¬í•œë‹¤
+    // ì„œë²„ê°€ ì‘ì„±í•˜ê³  ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ì½ëŠ”ë‹¤
     public NetworkList<ulong> connectedClientIds = new NetworkList<ulong>(
         values: null,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // ¼­¹ö°¡ °ü¸®ÇÏ´Â °ñÀÎ Ä«¿îÆ®ÀÌ¸ç UIÀÇ ÇöÀç ¼º°ø ÀÎ¿ø Ç¥½Ã·Î »ç¿ëÇÑ´Ù
+    // ì„œë²„ê°€ ê´€ë¦¬í•˜ëŠ” ê³¨ì¸ ì¹´ìš´íŠ¸ì´ë©° UIì˜ í˜„ì¬ ì„±ê³µ ì¸ì› í‘œì‹œë¡œ ì‚¬ìš©í•œë‹¤
     public NetworkVariable<int> CurRank = new NetworkVariable<int>(
         value: 0,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // ¼­¹ö¿¡¼­¸¸ »ç¿ëÇÏ¸ç °ñÀÎ Ã³¸®¸¦ Áßº¹À¸·Î ¿Ã¸®Áö ¾Ê±â À§ÇÑ ÁıÇÕÀÌ´Ù
+    // ì„œë²„ì—ì„œë§Œ ì‚¬ìš©í•˜ë©° ê³¨ì¸ ì²˜ë¦¬ë¥¼ ì¤‘ë³µìœ¼ë¡œ ì˜¬ë¦¬ì§€ ì•Šê¸° ìœ„í•œ ì§‘í•©ì´ë‹¤
     private readonly HashSet<ulong> _goalClients = new HashSet<ulong>();
 
-    // ½ÃÀÛ Àü ÀÔ·Â Àá±İÀ» À§ÇÑ ÇÃ·¡±×ÀÌ¸ç ¼­¹ö°¡ Á¦¾îÇÑ´Ù
+    // ì‹œì‘ ì „ ì…ë ¥ ì ê¸ˆì„ ìœ„í•œ í”Œë˜ê·¸ì´ë©° ì„œë²„ê°€ ì œì–´í•œë‹¤
     public NetworkVariable<bool> IsFrozen = new NetworkVariable<bool>(
         value: true,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // ¶ó¿îµå Á¦ÇÑ ½Ã°£ÀÌ¸ç ¼­¹ö ½Ã°£ ±âÁØÀ¸·Î ³²Àº ½Ã°£À» °è»êÇÒ ¶§ »ç¿ëÇÑ´Ù
+    // ë¼ìš´ë“œ ì œí•œ ì‹œê°„ì´ë©° ì„œë²„ ì‹œê°„ ê¸°ì¤€ìœ¼ë¡œ ë‚¨ì€ ì‹œê°„ì„ ê³„ì‚°í•  ë•Œ ì‚¬ìš©í•œë‹¤
     [SerializeField] private float roundDurationSeconds = 180f;
 
-    // ¶ó¿îµå ½ÃÀÛ ½Ã°¢À» ¼­¹ö ½Ã°£À¸·Î °íÁ¤ÇØ Àü Å¬¶óÀÌ¾ğÆ®°¡ µ¿ÀÏÇÑ ³²Àº ½Ã°£À» °è»êÇÒ ¼ö ÀÖ°Ô ÇÑ´Ù
+    // ë¼ìš´ë“œ ì‹œì‘ ì‹œê°ì„ ì„œë²„ ì‹œê°„ìœ¼ë¡œ ê³ ì •í•´ ì „ í´ë¼ì´ì–¸íŠ¸ê°€ ë™ì¼í•œ ë‚¨ì€ ì‹œê°„ì„ ê³„ì‚°í•  ìˆ˜ ìˆê²Œ í•œë‹¤
     public NetworkVariable<double> RoundStartServerTime = new NetworkVariable<double>(
         value: -1,
         readPerm: NetworkVariableReadPermission.Everyone,
         writePerm: NetworkVariableWritePermission.Server
     );
 
-    // Ä«¿îÆ®´Ù¿î ±æÀÌÀÌ¸ç 4¸é 3 2 1 0 ¼øÀ¸·Î ³»·Á°£´Ù
+    // ì¹´ìš´íŠ¸ë‹¤ìš´ ê¸¸ì´ì´ë©° 4ë©´ 3 2 1 0 ìˆœìœ¼ë¡œ ë‚´ë ¤ê°„ë‹¤
     [SerializeField] private int startCountdownTime = 4;
 
-    // Å¬¶óÀÌ¾ğÆ®°¡ Ä«¿îÆ®´Ù¿î UI¸¦ Ç¥½ÃÇÒ ¼ö ÀÖ°Ô ÇÏ´Â ÀÌº¥Æ®ÀÌ´Ù
+    // í´ë¼ì´ì–¸íŠ¸ê°€ ì¹´ìš´íŠ¸ë‹¤ìš´ UIë¥¼ í‘œì‹œí•  ìˆ˜ ìˆê²Œ í•˜ëŠ” ì´ë²¤íŠ¸ì´ë‹¤
     public static event Action<int> OnCountdownTick;
 
     private Coroutine _countdownRoutine;
 
-    // ¼­¹ö¿¡¼­¸¸ »ç¿ëÇÏ¸ç °¢ Å¬¶óÀÌ¾ğÆ®ÀÇ ½ºÆù ¹èÄ¡ ¿Ï·á ¿©ºÎ¸¦ È®ÀÎÇÑ´Ù
+    // ì„œë²„ì—ì„œë§Œ ì‚¬ìš©í•˜ë©° ê° í´ë¼ì´ì–¸íŠ¸ì˜ ìŠ¤í° ë°°ì¹˜ ì™„ë£Œ ì—¬ë¶€ë¥¼ í™•ì¸í•œë‹¤
     private readonly HashSet<ulong> _spawnReadyClients = new HashSet<ulong>();
 
     /// <summary>
-    /// ½Ì±ÛÅæ ÂüÁ¶¸¦ ÃÊ±âÈ­ÇÑ´Ù
+    /// ì‹±ê¸€í†¤ ì°¸ì¡°ë¥¼ ì´ˆê¸°í™”í•œë‹¤
     /// </summary>
     private void Awake()
     {
@@ -104,8 +104,8 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ³×Æ®¿öÅ© ½ºÆù ½Ã ¼­¹ö¿¡¼­ ¸ÅÄ¡ Á¤º¸¸¦ ÃÊ±âÈ­ÇÏ°í
-    /// Å¬¶óÀÌ¾ğÆ® Á¢¼Ó°ú ÇØÁ¦ Äİ¹é ¹× »óÅÂ º¯°æ Äİ¹éÀ» µî·ÏÇÑ´Ù
+    /// ë„¤íŠ¸ì›Œí¬ ìŠ¤í° ì‹œ ì„œë²„ì—ì„œ ë§¤ì¹˜ ì •ë³´ë¥¼ ì´ˆê¸°í™”í•˜ê³ 
+    /// í´ë¼ì´ì–¸íŠ¸ ì ‘ì†ê³¼ í•´ì œ ì½œë°± ë° ìƒíƒœ ë³€ê²½ ì½œë°±ì„ ë“±ë¡í•œë‹¤
     /// </summary>
     public override void OnNetworkSpawn()
     {
@@ -132,7 +132,7 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ³×Æ®¿öÅ© µğ½ºÆù ½Ã ¼­¹ö¿¡¼­ µî·ÏÇß´ø Äİ¹éÀ» ÇØÁ¦ÇÑ´Ù
+    /// ë„¤íŠ¸ì›Œí¬ ë””ìŠ¤í° ì‹œ ì„œë²„ì—ì„œ ë“±ë¡í–ˆë˜ ì½œë°±ì„ í•´ì œí•œë‹¤
     /// </summary>
     public override void OnNetworkDespawn()
     {
@@ -145,8 +145,8 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ Å¬¶óÀÌ¾ğÆ®°¡ ¿¬°áµÇ¾úÀ» ¶§ ¾ÆÀÌµğ ¸ñ·Ï¿¡ Ãß°¡ÇÏ°í
-    /// ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ ¿¬°áµÇ°í ½ºÆù ¹èÄ¡°¡ ³¡³µ´ÂÁö È®ÀÎÇÑ´Ù
+    /// ì„œë²„ì—ì„œ í´ë¼ì´ì–¸íŠ¸ê°€ ì—°ê²°ë˜ì—ˆì„ ë•Œ ì•„ì´ë”” ëª©ë¡ì— ì¶”ê°€í•˜ê³ 
+    /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ì—°ê²°ë˜ê³  ìŠ¤í° ë°°ì¹˜ê°€ ëë‚¬ëŠ”ì§€ í™•ì¸í•œë‹¤
     /// </summary>
     private void OnClientConnected(ulong clientId)
     {
@@ -155,18 +155,23 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ Å¬¶óÀÌ¾ğÆ®°¡ ¿¬°á ÇØÁ¦µÇ¾úÀ» ¶§ ¾ÆÀÌµğ ¸ñ·Ï¿¡¼­ Á¦°ÅÇÏ°í
-    /// ½ºÆù ÁØºñ ÁıÇÕ¿¡¼­µµ Á¦°ÅÇÑ´Ù
+    /// ì„œë²„ì—ì„œ í´ë¼ì´ì–¸íŠ¸ê°€ ì—°ê²° í•´ì œë˜ì—ˆì„ ë•Œ ì•„ì´ë”” ëª©ë¡ì—ì„œ ì œê±°í•˜ê³ 
+    /// ìŠ¤í° ì¤€ë¹„ ì§‘í•©ì—ì„œë„ ì œê±°í•œë‹¤
     /// </summary>
     private void OnClientDisconnected(ulong clientId)
     {
         connectedClientIds.Remove(clientId);
         _spawnReadyClients.Remove(clientId);
+
+        if (connectedClientIds.Count == 0)
+        {
+            Server_ResetForReuse();
+        }
     }
 
     /// <summary>
-    /// PlayerSpawnManager°¡ ¼­¹ö¿¡¼­ Æ¯Á¤ Å¬¶óÀÌ¾ğÆ®ÀÇ ½ºÆù ¹èÄ¡°¡ ¿Ï·áµÇ¾úÀ½À» ¾Ë¸± ¶§ È£ÃâÇÑ´Ù
-    /// ¼­¹ö´Â ÁØºñ ÁıÇÕ¿¡ Ãß°¡ÇÏ°í ½ÃÀÛ Á¶°ÇÀ» ´Ù½Ã È®ÀÎÇÑ´Ù
+    /// PlayerSpawnManagerê°€ ì„œë²„ì—ì„œ íŠ¹ì • í´ë¼ì´ì–¸íŠ¸ì˜ ìŠ¤í° ë°°ì¹˜ê°€ ì™„ë£Œë˜ì—ˆìŒì„ ì•Œë¦´ ë•Œ í˜¸ì¶œí•œë‹¤
+    /// ì„œë²„ëŠ” ì¤€ë¹„ ì§‘í•©ì— ì¶”ê°€í•˜ê³  ì‹œì‘ ì¡°ê±´ì„ ë‹¤ì‹œ í™•ì¸í•œë‹¤
     /// </summary>
     public void Server_NotifyClientSpawnReady(ulong clientId)
     {
@@ -177,7 +182,7 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ ±â´ë ÀÎ¿ø¸¸Å­ Å¬¶óÀÌ¾ğÆ®°¡ ¿¬°áµÇ°í ½ºÆù ¹èÄ¡±îÁö ¿Ï·áµÇ¸é ÄÜÅÙÃ÷ ½ÃÀÛ »óÅÂ·Î ÀüÈ¯ÇÑ´Ù
+    /// ì„œë²„ì—ì„œ ê¸°ëŒ€ ì¸ì›ë§Œí¼ í´ë¼ì´ì–¸íŠ¸ê°€ ì—°ê²°ë˜ê³  ìŠ¤í° ë°°ì¹˜ê¹Œì§€ ì™„ë£Œë˜ë©´ ì½˜í…ì¸  ì‹œì‘ ìƒíƒœë¡œ ì „í™˜í•œë‹¤
     /// </summary>
     private void TryStartWhenAllConnectedAndSpawned()
     {
@@ -196,7 +201,7 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­¸¸ »óÅÂ º¯°æÀ» °¨ÁöÇØ ÄÜÅÙÃ÷ ½ÃÀÛ »óÅÂ·Î ¹Ù²î¸é Ä«¿îÆ®´Ù¿î ÈÄ ¶ó¿îµå¸¦ ½ÃÀÛÇÑ´Ù
+    /// ì„œë²„ì—ì„œë§Œ ìƒíƒœ ë³€ê²½ì„ ê°ì§€í•´ ì½˜í…ì¸  ì‹œì‘ ìƒíƒœë¡œ ë°”ë€Œë©´ ì¹´ìš´íŠ¸ë‹¤ìš´ í›„ ë¼ìš´ë“œë¥¼ ì‹œì‘í•œë‹¤
     /// </summary>
     private void OnStateChanged_ServerOnly(InGameState prev, InGameState next)
     {
@@ -212,8 +217,8 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ Ä«¿îÆ®´Ù¿îÀ» ÁøÇàÇÑ µÚ ¶ó¿îµå ½ÃÀÛ ½Ã°¢À» °íÁ¤ÇÏ°í
-    /// ÀÔ·Â Àá±İÀ» ÇØÁ¦ÇÏ¸ç ÁøÇà »óÅÂ¸¦ ÄÜÅÙÃ÷ ÁøÇà Áß »óÅÂ·Î ÀüÈ¯ÇÑ´Ù
+    /// ì„œë²„ì—ì„œ ì¹´ìš´íŠ¸ë‹¤ìš´ì„ ì§„í–‰í•œ ë’¤ ë¼ìš´ë“œ ì‹œì‘ ì‹œê°ì„ ê³ ì •í•˜ê³ 
+    /// ì…ë ¥ ì ê¸ˆì„ í•´ì œí•˜ë©° ì§„í–‰ ìƒíƒœë¥¼ ì½˜í…ì¸  ì§„í–‰ ì¤‘ ìƒíƒœë¡œ ì „í™˜í•œë‹¤
     /// </summary>
     private IEnumerator Server_CountdownThenStartRound()
     {
@@ -242,7 +247,7 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ °è»êÇÑ Ä«¿îÆ®´Ù¿î °ªÀ» ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡°Ô Àü´ŞÇØ UI°¡ Ç¥½ÃµÇµµ·Ï ÇÑ´Ù
+    /// ì„œë²„ì—ì„œ ê³„ì‚°í•œ ì¹´ìš´íŠ¸ë‹¤ìš´ ê°’ì„ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì „ë‹¬í•´ UIê°€ í‘œì‹œë˜ë„ë¡ í•œë‹¤
     /// </summary>
     [ClientRpc]
     private void CountdownTickClientRpc(int t)
@@ -251,7 +256,7 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ °ü¸®ÇÏ´Â °ñÀÎ Ä«¿îÆ®¸¦ ÃÊ±âÈ­ÇÏ°í Áßº¹ ¹æÁö ÁıÇÕµµ ºñ¿î´Ù
+    /// ì„œë²„ì—ì„œ ê´€ë¦¬í•˜ëŠ” ê³¨ì¸ ì¹´ìš´íŠ¸ë¥¼ ì´ˆê¸°í™”í•˜ê³  ì¤‘ë³µ ë°©ì§€ ì§‘í•©ë„ ë¹„ìš´ë‹¤
     /// </summary>
     public void Server_ResetRank()
     {
@@ -261,8 +266,30 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö¿¡¼­ Æ¯Á¤ Å¬¶óÀÌ¾ğÆ®ÀÇ °ñÀÎÀ» µî·ÏÇÏ°í Áßº¹ÀÌ¸é ¹«½ÃÇÑ´Ù
-    /// Á¤»ó µî·ÏÀÌ¸é °ñÀÎ Ä«¿îÆ®¸¦ 1 Áõ°¡½ÃÅ²´Ù
+    /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ë‚˜ê°„ í›„ ì„œë²„ë¥¼ ì¬ì‚¬ìš©í•  ìˆ˜ ìˆë„ë¡ ìƒíƒœë¥¼ ì´ˆê¸°í™”í•œë‹¤.
+    /// </summary>
+    private void Server_ResetForReuse()
+    {
+        if (!IsServer) return;
+
+        if (_countdownRoutine != null)
+        {
+            StopCoroutine(_countdownRoutine);
+            _countdownRoutine = null;
+        }
+
+        connectedClientIds.Clear();
+        _spawnReadyClients.Clear();
+        Server_ResetRank();
+
+        IsFrozen.Value = true;
+        RoundStartServerTime.Value = -1;
+        state.Value = InGameState.WaitUntilAllClientsAreConntected;
+    }
+
+    /// <summary>
+    /// ì„œë²„ì—ì„œ íŠ¹ì • í´ë¼ì´ì–¸íŠ¸ì˜ ê³¨ì¸ì„ ë“±ë¡í•˜ê³  ì¤‘ë³µì´ë©´ ë¬´ì‹œí•œë‹¤
+    /// ì •ìƒ ë“±ë¡ì´ë©´ ê³¨ì¸ ì¹´ìš´íŠ¸ë¥¼ 1 ì¦ê°€ì‹œí‚¨ë‹¤
     /// </summary>
     public void Server_RegisterGoal(ulong clientId)
     {
@@ -275,8 +302,8 @@ public class InGameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// ¶ó¿îµå ½ÃÀÛ ½Ã°¢°ú ÇöÀç ¼­¹ö ½Ã°£À» ÀÌ¿ëÇØ ³²Àº ½Ã°£À» °è»êÇØ ¹İÈ¯ÇÑ´Ù
-    /// ¶ó¿îµå°¡ ¾ÆÁ÷ ½ÃÀÛµÇÁö ¾Ê¾ÒÀ¸¸é ±âº» ¶ó¿îµå ½Ã°£À» ¹İÈ¯ÇÑ´Ù
+    /// ë¼ìš´ë“œ ì‹œì‘ ì‹œê°ê³¼ í˜„ì¬ ì„œë²„ ì‹œê°„ì„ ì´ìš©í•´ ë‚¨ì€ ì‹œê°„ì„ ê³„ì‚°í•´ ë°˜í™˜í•œë‹¤
+    /// ë¼ìš´ë“œê°€ ì•„ì§ ì‹œì‘ë˜ì§€ ì•Šì•˜ìœ¼ë©´ ê¸°ë³¸ ë¼ìš´ë“œ ì‹œê°„ì„ ë°˜í™˜í•œë‹¤
     /// </summary>
     public float GetRemainingTimeSeconds()
     {
