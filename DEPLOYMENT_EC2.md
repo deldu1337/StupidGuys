@@ -96,7 +96,39 @@ EC2에서 매치메이킹 서버를 서비스한다면, `MATCHMAKING_SERVER_URL`
    export GAME_SERVER_PORT=7778
    export USE_PLAYFAB_GSDK=false
    chmod +x /opt/stupidguys/gameserver/StupidGuysServer.x86_64
-   /opt/stupidguys/gameserver/StupidGuysServer.x86_64 -batchmode -nographics
+   nohup /opt/stupidguys/gameserver/StupidGuysServer.x86_64 -batchmode -nographics -port 7778 -logFile run7778.log > nohup.out 2>&1 &
+   ```
+
+   서버 빌드에 포함되지 않은 씬(예: `StupidGuysRewardScene`) 접근 로그가 찍히면 프로세스를 재시작해야 한다면,
+   아래처럼 로그를 감시하며 자동 재시작하는 스크립트를 사용할 수 있습니다.
+   ```bash
+   # /opt/stupidguys/gameserver/run-7778-restart.sh
+   export GAME_SERVER_HOST=0.0.0.0
+   export GAME_SERVER_PORT=7778
+   export USE_PLAYFAB_GSDK=false
+
+   BINARY_PATH="/opt/stupidguys/gameserver/StupidGuysServer.x86_64"
+   LOG_FILE="run7778.log"
+   NOHUP_OUT="nohup.out"
+   RESTART_DELAY_SECONDS=2
+   SCENE_MISSING_PATTERN="StupidGuysRewardScene"
+
+   start_server() {
+     nohup "$BINARY_PATH" -batchmode -nographics -port "$GAME_SERVER_PORT" -logFile "$LOG_FILE" \
+       > "$NOHUP_OUT" 2>&1 &
+     echo $!
+   }
+
+   while true; do
+     server_pid=$(start_server)
+     if tail -n0 -F "$LOG_FILE" | grep -m1 "$SCENE_MISSING_PATTERN"; then
+       kill -TERM "$server_pid" 2>/dev/null || true
+       wait "$server_pid" 2>/dev/null || true
+     fi
+     sleep "$RESTART_DELAY_SECONDS"
+     : > "$LOG_FILE"
+     : > "$NOHUP_OUT"
+   done
    ```
 
 4. **실행**
@@ -105,9 +137,9 @@ EC2에서 매치메이킹 서버를 서비스한다면, `MATCHMAKING_SERVER_URL`
    /opt/stupidguys/gameserver/run.sh
    ```
 
-5. **20개 포트 프로세스 띄우기 예시**
+5. **2개 포트 프로세스 띄우기 예시 (7778~7779)**
    ```bash
-   for port in $(seq 7778 7798); do
+   for port in $(seq 7778 7779); do
      export GAME_SERVER_PORT=$port
      /opt/stupidguys/gameserver/StupidGuysServer.x86_64 -batchmode -nographics &
    done

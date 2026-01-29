@@ -71,6 +71,12 @@ public class MatchmakingHub : Hub
         if (lobby == null)
         {
             lobby = _lobbiesManager.CreateLobby(maxPlayers);
+            if (lobby == null)
+            {
+                Console.WriteLine("[SignalR] No available lobby slots.");
+                throw new HubException("No available lobbies");
+            }
+
             Console.WriteLine($"[SignalR] Created new lobby {lobby.Id}");
 
             StartAllocationTimer(lobby);

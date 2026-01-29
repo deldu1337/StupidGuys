@@ -7,9 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<LobbiesManager>();
 builder.Services.AddSingleton(GameServerSettings.FromEnvironment());
 builder.Services.AddSingleton(MatchmakingSettings.FromEnvironment());
+builder.Services.AddSingleton(provider =>
+{
+    var settings = provider.GetRequiredService<MatchmakingSettings>();
+    var maxLobbyCount = settings.PortRangeEnd - settings.PortRangeStart + 1;
+    return new LobbiesManager(maxLobbyCount);
+});
 builder.Services.AddSingleton(provider =>
 {
     var settings = provider.GetRequiredService<MatchmakingSettings>();

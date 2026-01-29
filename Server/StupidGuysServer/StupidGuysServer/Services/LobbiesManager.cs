@@ -1,5 +1,6 @@
 ﻿using StupidGuysServer.Models;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace StupidGuysServer.Services
@@ -7,26 +8,36 @@ namespace StupidGuysServer.Services
     public class LobbiesManager
     {
         private readonly ConcurrentDictionary<int, Lobby> _lobbies = new();
-        private int _nextLobbyId = 1;
-        private readonly object _idLock = new object();
+        private readonly ConcurrentQueue<int> _availableLobbyIds;
+        private readonly HashSet<int> _activeLobbyIds = new();
+        private readonly object _idLock = new();
+
+        public LobbiesManager(int maxLobbyCount)
+        {
+            _availableLobbyIds = new ConcurrentQueue<int>(Enumerable.Range(1, maxLobbyCount));
+        }
 
         public Lobby? FindAvailableLobby()
         {
             return _lobbies.Values.FirstOrDefault(lobby => !lobby.IsFull && !lobby.IsMatchFinalized);
         }
 
-        public Lobby CreateLobby(int maxPlayers)
+        public Lobby? CreateLobby(int maxPlayers)
         {
-            int lobbyId;
             lock (_idLock)
             {
-                lobbyId = _nextLobbyId++;
+                if (!_availableLobbyIds.TryDequeue(out var lobbyId))
+                {
+                    return null;
+                }
+
+                _activeLobbyIds.Add(lobbyId);
+
+                var lobby = new Lobby(lobbyId, maxPlayers);
+                _lobbies[lobbyId] = lobby;
+
+                return lobby;
             }
-
-            var lobby = new Lobby(lobbyId, maxPlayers);
-            _lobbies[lobbyId] = lobby;
-
-            return lobby;
         }
 
         public Lobby? GetLobby(int lobbyId)
@@ -48,7 +59,7 @@ namespace StupidGuysServer.Services
                 {
                     if (remainCount == 0)
                     {
-                        _lobbies.TryRemove(lobby.Id, out _);
+                        RemoveLobby(lobby.Id);
                     }
                     return lobby;
                 }
@@ -58,7 +69,20 @@ namespace StupidGuysServer.Services
 
         public bool RemoveLobby(int lobbyId)
         {
-            return _lobbies.TryRemove(lobbyId, out _);
+            if (!_lobbies.TryRemove(lobbyId, out _))
+            {
+                return false;
+            }
+
+            lock (_idLock)
+            {
+                if (_activeLobbyIds.Remove(lobbyId))
+                {
+                    _availableLobbyIds.Enqueue(lobbyId);
+                }
+            }
+
+            return true;
         }
     }
 }
