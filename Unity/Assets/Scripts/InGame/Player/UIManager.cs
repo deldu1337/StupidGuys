@@ -1,68 +1,70 @@
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    // Å¸ÀÌ¸Ó Ç¥½Ã¿ë ³²Àº ½Ã°£ÀÌ¸ç ½ÇÁ¦ °è»êÀº ¼­¹ö ±âÁØ ½Ã°£À» »ç¿ëÇÑ´Ù
+    // íƒ€ì´ë¨¸ í‘œì‹œìš© ë‚¨ì€ ì‹œê°„ì´ë©° ì‹¤ì œ ê³„ì‚°ì€ ì„œë²„ ê¸°ì¤€ ì‹œê°„ì„ ì‚¬ìš©í•œë‹¤
     public float limitTime = 180;
 
-    // Å¸ÀÌ¸Ó ÅØ½ºÆ® ÄÄÆ÷³ÍÆ®
+    // íƒ€ì´ë¨¸ í…ìŠ¤íŠ¸ ì»´í¬ë„ŒíŠ¸
     [SerializeField] Text textTimer;
 
-    // ¶ó¿îµå Á¾·á ¿¬Ãâ ¿ÀºêÁ§Æ®
+    // ë¼ìš´ë“œ ì¢…ë£Œ ì—°ì¶œ ì˜¤ë¸Œì íŠ¸
     [SerializeField] GameObject roundOver;
 
-    // ¼º°ø ¿¬Ãâ ¿ÀºêÁ§Æ®
+    // ì„±ê³µ ì—°ì¶œ ì˜¤ë¸Œì íŠ¸
     [SerializeField] GameObject success;
 
-    // ½ÇÆĞ ¿¬Ãâ ¿ÀºêÁ§Æ®
+    // ì‹¤íŒ¨ ì—°ì¶œ ì˜¤ë¸Œì íŠ¸
     [SerializeField] GameObject failure;
 
-    // ÇöÀç µµÂø ÀÎ¿ø °ªÀÌ¸ç ¼­¹öÀÇ CurRank¿Í µ¿±âÈ­µÈ´Ù
+    // í˜„ì¬ ë„ì°© ì¸ì› ê°’ì´ë©° ì„œë²„ì˜ CurRankì™€ ë™ê¸°í™”ëœë‹¤
     public int curRank { get; set; }
 
-    // ÇöÀç µµÂø ÀÎ¿ø Ç¥½Ã ÅØ½ºÆ®
+    // í˜„ì¬ ë„ì°© ì¸ì› í‘œì‹œ í…ìŠ¤íŠ¸
     public Text curRankUI;
 
-    // ºĞ¸ğ Ç¥½Ã ÅØ½ºÆ® ¿¹¸¦ µé¸é  / 2
+    // ë¶„ëª¨ í‘œì‹œ í…ìŠ¤íŠ¸ ì˜ˆë¥¼ ë“¤ë©´  / 2
     public Text headCountRankUI;
 
-    // ½Ì±ÛÅæ Á¢±Ù¿ë ÀÎ½ºÅÏ½º
+    // ì‹±ê¸€í†¤ ì ‘ê·¼ìš© ì¸ìŠ¤í„´ìŠ¤
     public static UIManager Instance;
 
-    // CurRank º¯°æ ÀÌº¥Æ®¸¦ ÇÑ ¹ø¸¸ ±¸µ¶ÇÏ±â À§ÇÑ ÇÃ·¡±×
+    // CurRank ë³€ê²½ ì´ë²¤íŠ¸ë¥¼ í•œ ë²ˆë§Œ êµ¬ë…í•˜ê¸° ìœ„í•œ í”Œë˜ê·¸
     private bool hookedRank = false;
 
-    // ºĞ ´ÜÀ§ Ç¥½Ã¿ë
+    // ë¶„ ë‹¨ìœ„ í‘œì‹œìš©
     int min;
 
-    // ÃÊ ´ÜÀ§ Ç¥½Ã¿ë
+    // ì´ˆ ë‹¨ìœ„ í‘œì‹œìš©
     float sec;
 
-    // Á¾·á ¿¬Ãâ ½ÃÀÛ Àü ´ë±â ½Ã°£
+    // ì¢…ë£Œ ì—°ì¶œ ì‹œì‘ ì „ ëŒ€ê¸° ì‹œê°„
     float waitTime = 2f;
 
-    // Á¾·á ¿¬Ãâ Å¸ÀÌ¸Ó
+    // ì¢…ë£Œ ì—°ì¶œ íƒ€ì´ë¨¸
     float curretTime = 0f;
 
-    // ÃÑ ÀÎ¿ø ¼öÀÌ¸ç HeadCount ºĞ¸ğ·Î »ç¿ëÇÑ´Ù
+    // ì´ ì¸ì› ìˆ˜ì´ë©° HeadCount ë¶„ëª¨ë¡œ ì‚¬ìš©í•œë‹¤
     private int totalHeadCount = 0;
 
-    // ¶ó¿îµå°¡ Á¾·áµÇ¾ú´ÂÁö ¿©ºÎ
+    // ë¼ìš´ë“œê°€ ì¢…ë£Œë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
     private bool roundEnded = false;
 
-    // ³» ·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ °ñÀÎÇß´ÂÁö ¿©ºÎÀÌ¸ç ÇÑ ¹ø true°¡ µÇ¸é À¯ÁöÇÑ´Ù
+    // ë‚´ ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ê³¨ì¸í–ˆëŠ”ì§€ ì—¬ë¶€ì´ë©° í•œ ë²ˆ trueê°€ ë˜ë©´ ìœ ì§€í•œë‹¤
     private bool localIsGoal = false;
 
-    // °á°ú UI¸¦ ÇÑ ¹ø¸¸ º¸¿©ÁÖ±â À§ÇÑ ÇÃ·¡±×
+    // ê²°ê³¼ UIë¥¼ í•œ ë²ˆë§Œ ë³´ì—¬ì£¼ê¸° ìœ„í•œ í”Œë˜ê·¸
     private bool resultShown = false;
 
-    // ¾À ·Îµå¸¦ ÇÑ ¹ø¸¸ ¼öÇàÇÏ±â À§ÇÑ ÇÃ·¡±×
+    // ì”¬ ë¡œë“œë¥¼ í•œ ë²ˆë§Œ ìˆ˜í–‰í•˜ê¸° ìœ„í•œ í”Œë˜ê·¸
     private bool sceneLoading = false;
+    private bool matchCompletionReported = false;
 
     /// <summary>
-    /// ½Ì±ÛÅæ ÀÎ½ºÅÏ½º¸¦ ÃÊ±âÈ­ÇÑ´Ù
+    /// ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì´ˆê¸°í™”í•œë‹¤
     /// </summary>
     private void Awake()
     {
@@ -70,7 +72,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¶ó¿îµå ½ÃÀÛ ½Ã UI »óÅÂ¸¦ ÃÊ±âÈ­ÇÏ°í HeadCount ÅØ½ºÆ®¸¦ Ä³½ÃÇÑ´Ù
+    /// ë¼ìš´ë“œ ì‹œì‘ ì‹œ UI ìƒíƒœë¥¼ ì´ˆê¸°í™”í•˜ê³  HeadCount í…ìŠ¤íŠ¸ë¥¼ ìºì‹œí•œë‹¤
     /// </summary>
     void Start()
     {
@@ -85,13 +87,14 @@ public class UIManager : MonoBehaviour
         localIsGoal = false;
         resultShown = false;
         sceneLoading = false;
+        matchCompletionReported = false;
 
         CacheHeadCountTextIfNeeded();
     }
 
     /// <summary>
-    /// ¼­¹ö CurRank º¯È­ ±¸µ¶À» ¿¬°áÇÏ°í
-    /// ¶ó¿îµå Á¾·á ¿©ºÎ¿¡ µû¶ó Á¾·á ¿¬Ãâ ¶Ç´Â Å¸ÀÌ¸Ó °»½ÅÀ» ¼öÇàÇÑ´Ù
+    /// ì„œë²„ CurRank ë³€í™” êµ¬ë…ì„ ì—°ê²°í•˜ê³ 
+    /// ë¼ìš´ë“œ ì¢…ë£Œ ì—¬ë¶€ì— ë”°ë¼ ì¢…ë£Œ ì—°ì¶œ ë˜ëŠ” íƒ€ì´ë¨¸ ê°±ì‹ ì„ ìˆ˜í–‰í•œë‹¤
     /// </summary>
     void Update()
     {
@@ -116,7 +119,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¿ÀºêÁ§Æ® ÆÄ±« ½Ã CurRank º¯°æ ÀÌº¥Æ® ±¸µ¶À» ÇØÁ¦ÇÑ´Ù
+    /// ì˜¤ë¸Œì íŠ¸ íŒŒê´´ ì‹œ CurRank ë³€ê²½ ì´ë²¤íŠ¸ êµ¬ë…ì„ í•´ì œí•œë‹¤
     /// </summary>
     private void OnDestroy()
     {
@@ -125,8 +128,8 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¼­¹öÀÇ µµÂø ÀÎ¿ø °ªÀÌ º¯°æµÉ ¶§ UI¸¦ °»½ÅÇÏ°í
-    /// ÃÑ ÀÎ¿ø¿¡ µµ´ŞÇß´ÂÁö È®ÀÎÇÑ´Ù
+    /// ì„œë²„ì˜ ë„ì°© ì¸ì› ê°’ì´ ë³€ê²½ë  ë•Œ UIë¥¼ ê°±ì‹ í•˜ê³ 
+    /// ì´ ì¸ì›ì— ë„ë‹¬í–ˆëŠ”ì§€ í™•ì¸í•œë‹¤
     /// </summary>
     private void OnRankChanged(int prev, int next)
     {
@@ -139,7 +142,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// headCountRankUI°¡ ºñ¾îÀÖÀ» °æ¿ì ¾À¿¡¼­ HeadCount ¿ÀºêÁ§Æ®¸¦ Ã£¾Æ Text¸¦ Ä³½ÃÇÑ´Ù
+    /// headCountRankUIê°€ ë¹„ì–´ìˆì„ ê²½ìš° ì”¬ì—ì„œ HeadCount ì˜¤ë¸Œì íŠ¸ë¥¼ ì°¾ì•„ Textë¥¼ ìºì‹œí•œë‹¤
     /// </summary>
     private void CacheHeadCountTextIfNeeded()
     {
@@ -151,8 +154,8 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÃÑ ÀÎ¿ø °ªÀ» ÀúÀåÇÏ°í HeadCount ºĞ¸ğ ÅØ½ºÆ®¸¦ °»½ÅÇÑ´Ù
-    /// °ªÀÌ °»½ÅµÇ´Â ¼ø°£¿¡µµ Á¾·á Á¶°ÇÀ» Áï½Ã È®ÀÎÇÑ´Ù
+    /// ì´ ì¸ì› ê°’ì„ ì €ì¥í•˜ê³  HeadCount ë¶„ëª¨ í…ìŠ¤íŠ¸ë¥¼ ê°±ì‹ í•œë‹¤
+    /// ê°’ì´ ê°±ì‹ ë˜ëŠ” ìˆœê°„ì—ë„ ì¢…ë£Œ ì¡°ê±´ì„ ì¦‰ì‹œ í™•ì¸í•œë‹¤
     /// </summary>
     public void SetHeadCountTotal(int totalPlayers)
     {
@@ -166,8 +169,8 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ·ÎÄÃ ÇÃ·¹ÀÌ¾îÀÇ °ñÀÎ ¿©ºÎ¸¦ ÀúÀåÇÑ´Ù
-    /// ÇÑ ¹ø true°¡ µÇ¸é ÀÌÈÄ false·Î µÇµ¹¸®Áö ¾Ê´Â´Ù
+    /// ë¡œì»¬ í”Œë ˆì´ì–´ì˜ ê³¨ì¸ ì—¬ë¶€ë¥¼ ì €ì¥í•œë‹¤
+    /// í•œ ë²ˆ trueê°€ ë˜ë©´ ì´í›„ falseë¡œ ë˜ëŒë¦¬ì§€ ì•ŠëŠ”ë‹¤
     /// </summary>
     public void SetLocalGoal(bool isGoal)
     {
@@ -175,7 +178,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// µµÂø ÀÎ¿øÀÌ ÃÑ ÀÎ¿ø¿¡ µµ´ŞÇß´ÂÁö È®ÀÎÇÏ°í µµ´ŞÇß´Ù¸é ¶ó¿îµå¸¦ Á¾·áÇÑ´Ù
+    /// ë„ì°© ì¸ì›ì´ ì´ ì¸ì›ì— ë„ë‹¬í–ˆëŠ”ì§€ í™•ì¸í•˜ê³  ë„ë‹¬í–ˆë‹¤ë©´ ë¼ìš´ë“œë¥¼ ì¢…ë£Œí•œë‹¤
     /// </summary>
     private void CheckEndByHeadCount()
     {
@@ -187,7 +190,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¶ó¿îµå Á¾·á¸¦ ÇÑ ¹ø¸¸ ¼öÇàÇÏ°í Á¾·á UI »óÅÂ¸¦ ÃÊ±âÈ­ÇÑ´Ù
+    /// ë¼ìš´ë“œ ì¢…ë£Œë¥¼ í•œ ë²ˆë§Œ ìˆ˜í–‰í•˜ê³  ì¢…ë£Œ UI ìƒíƒœë¥¼ ì´ˆê¸°í™”í•œë‹¤
     /// </summary>
     private void EndRoundOnce()
     {
@@ -197,6 +200,7 @@ public class UIManager : MonoBehaviour
         curretTime = 0f;
         resultShown = false;
         sceneLoading = false;
+        ReportMatchCompletionOnce();
 
         if (roundOver) roundOver.SetActive(true);
         if (success) success.SetActive(false);
@@ -204,8 +208,8 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¼­¹ö ½Ã°£ ±âÁØÀ¸·Î ³²Àº ½Ã°£À» °è»êÇØ Å¸ÀÌ¸Ó UI¿¡ Ç¥½ÃÇÑ´Ù
-    /// ½Ã°£ÀÌ 0ÀÌ µÇ¸é ¶ó¿îµå¸¦ Á¾·áÇÑ´Ù
+    /// ì„œë²„ ì‹œê°„ ê¸°ì¤€ìœ¼ë¡œ ë‚¨ì€ ì‹œê°„ì„ ê³„ì‚°í•´ íƒ€ì´ë¨¸ UIì— í‘œì‹œí•œë‹¤
+    /// ì‹œê°„ì´ 0ì´ ë˜ë©´ ë¼ìš´ë“œë¥¼ ì¢…ë£Œí•œë‹¤
     /// </summary>
     void UpdateTimerFromServerTime()
     {
@@ -239,8 +243,8 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¶ó¿îµå Á¾·á ÈÄ ÀÏÁ¤ ½Ã°£¿¡ ¸ÂÃç roundOver¸¦ ¼û±â°í ¼º°ø ¶Ç´Â ½ÇÆĞ¸¦ Ç¥½ÃÇÑ µÚ
-    /// ´õ ½Ã°£ÀÌ Áö³ª¸é º¸»ó ¾ÀÀ¸·Î ÀÌµ¿ÇÑ´Ù
+    /// ë¼ìš´ë“œ ì¢…ë£Œ í›„ ì¼ì • ì‹œê°„ì— ë§ì¶° roundOverë¥¼ ìˆ¨ê¸°ê³  ì„±ê³µ ë˜ëŠ” ì‹¤íŒ¨ë¥¼ í‘œì‹œí•œ ë’¤
+    /// ë” ì‹œê°„ì´ ì§€ë‚˜ë©´ ë³´ìƒ ì”¬ìœ¼ë¡œ ì´ë™í•œë‹¤
     /// </summary>
     private void HandleRoundEndUI()
     {
@@ -270,9 +274,41 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private void ReportMatchCompletionOnce()
+    {
+        if (matchCompletionReported)
+            return;
+
+        matchCompletionReported = true;
+        _ = ReportMatchCompletionAsync();
+    }
+
+    private async Task ReportMatchCompletionAsync()
+    {
+        int lobbyId = PlayerPrefs.GetInt("LobbyId", 0);
+        if (lobbyId <= 0)
+        {
+            Debug.LogWarning("[UI] No lobby id found for match completion");
+            return;
+        }
+
+        var matchmakingClient = FindAnyObjectByType<MatchmakingClient>();
+        if (matchmakingClient == null)
+        {
+            Debug.LogWarning("[UI] MatchmakingClient not found for match completion");
+            return;
+        }
+
+        bool completed = await matchmakingClient.CompleteMatchAsync(lobbyId);
+        if (!completed)
+        {
+            Debug.LogWarning($"[UI] Failed to report match completion for lobby {lobbyId}");
+        }
+    }
+
     /// <summary>
-    /// ¿ÜºÎ¿¡¼­ °ÔÀÓ ¿À¹ö¸¦ È£ÃâÇÒ ¼ö ÀÖµµ·Ï ³²°ÜµĞ È£È¯¿ë ÇÔ¼öÀÌ¸ç
-    /// °ñÀÎ ¿©ºÎ¸¦ ±â·ÏÇÑ µÚ ¶ó¿îµå¸¦ Á¾·á Ã³¸®ÇÑ´Ù
+    /// ì™¸ë¶€ì—ì„œ ê²Œì„ ì˜¤ë²„ë¥¼ í˜¸ì¶œí•  ìˆ˜ ìˆë„ë¡ ë‚¨ê²¨ë‘” í˜¸í™˜ìš© í•¨ìˆ˜ì´ë©°
+    /// ê³¨ì¸ ì—¬ë¶€ë¥¼ ê¸°ë¡í•œ ë’¤ ë¼ìš´ë“œë¥¼ ì¢…ë£Œ ì²˜ë¦¬í•œë‹¤
     /// </summary>
     public void GameOver(bool isGoal)
     {

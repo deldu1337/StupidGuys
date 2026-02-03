@@ -224,6 +224,38 @@ public class MatchmakingClient : MonoBehaviour
         }
     }
 
+    public async Task<bool> CompleteMatchAsync(int lobbyId)
+    {
+        if (lobbyId <= 0)
+        {
+            Debug.LogWarning("[SignalR] Invalid lobby id for completion");
+            return false;
+        }
+
+        if (_connection.State != HubConnectionState.Connected)
+        {
+            bool connected = await ConnectAsync();
+            if (!connected)
+            {
+                return false;
+            }
+        }
+
+        try
+        {
+            Debug.Log($"[SignalR] Completing match for lobby {lobbyId}...");
+            await _connection.InvokeAsync("CompleteMatch", lobbyId);
+            Debug.Log("[SignalR] Match completion reported");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalR] Failed to complete match: {ex.Message}");
+            OnError?.Invoke($"Failed to complete match: {ex.Message}");
+            return false;
+        }
+    }
+
     private async void OnDestroy()
     {
         await DisconnectAsync();
