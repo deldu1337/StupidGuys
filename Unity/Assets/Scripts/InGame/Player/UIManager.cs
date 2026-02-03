@@ -38,8 +38,6 @@ public class UIManager : MonoBehaviour
     // 분 단위 표시용
     int min;
 
-    private bool matchCompletionReported = false;
-        matchCompletionReported = false;
     // 초 단위 표시용
     float sec;
 
@@ -63,6 +61,7 @@ public class UIManager : MonoBehaviour
 
     // 씬 로드를 한 번만 수행하기 위한 플래그
     private bool sceneLoading = false;
+    private bool matchCompletionReported = false;
 
     /// <summary>
     /// 싱글톤 인스턴스를 초기화한다
@@ -88,6 +87,7 @@ public class UIManager : MonoBehaviour
         localIsGoal = false;
         resultShown = false;
         sceneLoading = false;
+        matchCompletionReported = false;
 
         CacheHeadCountTextIfNeeded();
     }
@@ -178,7 +178,6 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-        ReportMatchCompletionOnce();
     /// 도착 인원이 총 인원에 도달했는지 확인하고 도달했다면 라운드를 종료한다
     /// </summary>
     private void CheckEndByHeadCount()
@@ -201,6 +200,7 @@ public class UIManager : MonoBehaviour
         curretTime = 0f;
         resultShown = false;
         sceneLoading = false;
+        ReportMatchCompletionOnce();
 
         if (roundOver) roundOver.SetActive(true);
         if (success) success.SetActive(false);
@@ -292,7 +292,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        var matchmakingClient = FindObjectOfType<MatchmakingClient>();
+        var matchmakingClient = FindAnyObjectByType<MatchmakingClient>();
         if (matchmakingClient == null)
         {
             Debug.LogWarning("[UI] MatchmakingClient not found for match completion");
