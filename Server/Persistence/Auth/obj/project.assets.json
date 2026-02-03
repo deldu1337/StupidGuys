@@ -697,35 +697,37 @@
           "lib/netstandard2.0/Mono.TextTemplating.dll": {}
         }
       },
-      "MySqlConnector/2.3.5": {
+      "Npgsql/8.0.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "7.0.1"
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.0"
         },
         "compile": {
-          "lib/net8.0/MySqlConnector.dll": {
+          "lib/net8.0/Npgsql.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net8.0/MySqlConnector.dll": {
+          "lib/net8.0/Npgsql.dll": {
             "related": ".xml"
           }
         }
       },
-      "Pomelo.EntityFrameworkCore.MySql/8.0.3": {
+      "Npgsql.EntityFrameworkCore.PostgreSQL/8.0.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Relational": "[8.0.13, 8.0.999]",
-          "MySqlConnector": "2.3.5"
+          "Microsoft.EntityFrameworkCore": "8.0.0",
+          "Microsoft.EntityFrameworkCore.Abstractions": "8.0.0",
+          "Microsoft.EntityFrameworkCore.Relational": "8.0.0",
+          "Npgsql": "8.0.0"
         },
         "compile": {
-          "lib/net8.0/Pomelo.EntityFrameworkCore.MySql.dll": {
+          "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net8.0/Pomelo.EntityFrameworkCore.MySql.dll": {
+          "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
             "related": ".xml"
           }
         }
@@ -2376,48 +2378,42 @@
         "mono.texttemplating.nuspec"
       ]
     },
-    "MySqlConnector/2.3.5": {
-      "sha512": "AmEfUPkFl+Ev6jJ8Dhns3CYHBfD12RHzGYWuLt6DfG6/af6YvOMyPz74ZPPjBYQGRJkumD2Z48Kqm8s5DJuhLA==",
+    "Npgsql/8.0.0": {
+      "sha512": "Qiz74U+O7Mv4knrsXgKVYGJjgwoziK+aMFZqz7PtKR3vyGIhZA0tnW6HoUnL3X+YqtmVuhmoKkN8LDWEHMxPbw==",
       "type": "package",
-      "path": "mysqlconnector/2.3.5",
+      "path": "npgsql/8.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "README.md",
-        "lib/net462/MySqlConnector.dll",
-        "lib/net462/MySqlConnector.xml",
-        "lib/net471/MySqlConnector.dll",
-        "lib/net471/MySqlConnector.xml",
-        "lib/net48/MySqlConnector.dll",
-        "lib/net48/MySqlConnector.xml",
-        "lib/net6.0/MySqlConnector.dll",
-        "lib/net6.0/MySqlConnector.xml",
-        "lib/net7.0/MySqlConnector.dll",
-        "lib/net7.0/MySqlConnector.xml",
-        "lib/net8.0/MySqlConnector.dll",
-        "lib/net8.0/MySqlConnector.xml",
-        "lib/netstandard2.0/MySqlConnector.dll",
-        "lib/netstandard2.0/MySqlConnector.xml",
-        "lib/netstandard2.1/MySqlConnector.dll",
-        "lib/netstandard2.1/MySqlConnector.xml",
-        "logo.png",
-        "mysqlconnector.2.3.5.nupkg.sha512",
-        "mysqlconnector.nuspec"
+        "lib/net6.0/Npgsql.dll",
+        "lib/net6.0/Npgsql.xml",
+        "lib/net7.0/Npgsql.dll",
+        "lib/net7.0/Npgsql.xml",
+        "lib/net8.0/Npgsql.dll",
+        "lib/net8.0/Npgsql.xml",
+        "lib/netstandard2.0/Npgsql.dll",
+        "lib/netstandard2.0/Npgsql.xml",
+        "lib/netstandard2.1/Npgsql.dll",
+        "lib/netstandard2.1/Npgsql.xml",
+        "npgsql.8.0.0.nupkg.sha512",
+        "npgsql.nuspec",
+        "postgresql.png"
       ]
     },
-    "Pomelo.EntityFrameworkCore.MySql/8.0.3": {
-      "sha512": "gOHP6v/nFp5V/FgHqv9mZocGqCLGofihEX9dTbLhiXX3H7SJHmGX70GIPUpiqLT+1jIfDxg1PZh9MTUKuk7Kig==",
+    "Npgsql.EntityFrameworkCore.PostgreSQL/8.0.0": {
+      "sha512": "GDXiMS9peEdjSCU/rfgyHruio7q6tYuywGaktqEi6UPQ6ILechp3fVVX+dHXkIXt4nklCBzYVWkzFrSL9ubKUA==",
       "type": "package",
-      "path": "pomelo.entityframeworkcore.mysql/8.0.3",
+      "path": "npgsql.entityframeworkcore.postgresql/8.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "README.md",
-        "icon.png",
-        "lib/net8.0/Pomelo.EntityFrameworkCore.MySql.dll",
-        "lib/net8.0/Pomelo.EntityFrameworkCore.MySql.xml",
-        "pomelo.entityframeworkcore.mysql.8.0.3.nupkg.sha512",
-        "pomelo.entityframeworkcore.mysql.nuspec"
+        "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll",
+        "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.xml",
+        "npgsql.entityframeworkcore.postgresql.8.0.0.nupkg.sha512",
+        "npgsql.entityframeworkcore.postgresql.nuspec",
+        "postgresql.png"
       ]
     },
     "Swashbuckle.AspNetCore/6.6.2": {
@@ -2869,29 +2865,29 @@
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 8.0.22",
       "Microsoft.EntityFrameworkCore >= 8.0.22",
       "Microsoft.EntityFrameworkCore.Design >= 8.0.22",
-      "Pomelo.EntityFrameworkCore.MySql >= 8.0.3",
+      "Npgsql.EntityFrameworkCore.PostgreSQL >= 8.0.0",
       "Swashbuckle.AspNetCore >= 6.6.2",
       "System.IdentityModel.Tokens.Jwt >= 8.15.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\PC\\.nuget\\packages\\": {},
+    "C:\\Users\\deldu\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\Auth\\Auth.csproj",
+      "projectUniqueName": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj",
       "projectName": "Auth",
-      "projectPath": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\Auth\\Auth.csproj",
-      "packagesPath": "C:\\Users\\PC\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\Auth\\obj\\",
+      "projectPath": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj",
+      "packagesPath": "C:\\Users\\deldu\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\PC\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\deldu\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -2918,7 +2914,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net8.0": {
@@ -2938,9 +2934,9 @@
             "target": "Package",
             "version": "[8.0.22, )"
           },
-          "Pomelo.EntityFrameworkCore.MySql": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": {
             "target": "Package",
-            "version": "[8.0.3, )"
+            "version": "[8.0.0, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
@@ -2970,7 +2966,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

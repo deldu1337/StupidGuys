@@ -48,8 +48,6 @@ namespace Auth.Repositories
             existingUser.Password = user.Password;
             existingUser.Nickname = user.Nickname;
             existingUser.LastConnected = user.LastConnected;
-            
-            existingUser.SkinIndex = user.SkinIndex;
 
             _context.Users.Update(existingUser);
         }

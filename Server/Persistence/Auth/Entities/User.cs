@@ -8,5 +8,6 @@
         public string? Nickname { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastConnected { get; set; }
+        public int SkinIndex { get; set; } = 0;
     }
 }

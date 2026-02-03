@@ -1,16 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Auth
 {
     public static class DbConnectionSettings
     {
+        // PostgreSQL 로컬 연결 문자열
         public const string CONNECTION =
-            "server=127.0.0.1;" +
-            "port=3309;" +
-            "user=master;" +
-            "password=1234;" +
-            "database=game;";
-
-        public static readonly MySqlServerVersion MYSQL_SERVER_VERSION = new MySqlServerVersion(new Version(8, 4));
+            "Host=127.0.0.1;" +
+            "Port=5432;" +
+            "Username=postgres;" +
+            "Password=1234;" +
+            "Database=game;";
     }
 }
