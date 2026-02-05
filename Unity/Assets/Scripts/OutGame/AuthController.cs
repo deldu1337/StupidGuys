@@ -67,7 +67,7 @@ public class AuthController : MonoBehaviour
         _view.SetLoginInteractables(false);
 
         // 서버의 LoginDTO가 무엇인지에 따라 변수명(Id, Pw)을 맞춰야 함
-        var loginDto = new LoginRequest { Id = id, Pw = pw };
+        var loginDto = new LoginRequest { id = id, pw = pw };
         string json = JsonUtility.ToJson(loginDto);
         bool success = false;
 
@@ -77,11 +77,14 @@ public class AuthController : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(body);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
 
             // HTTPS 인증서 문제 해결 (개발 단계용)
             request.certificateHandler = new BypassCertificateHandler();
 
+            Debug.Log($"[Auth] Login request => {request.url}, body: {json}");
             yield return request.SendWebRequest();
+            Debug.Log($"[Auth] Login response <= code: {request.responseCode}, result: {request.result}, error: {request.error}, body: {request.downloadHandler.text}");
 
             //string responseText = request.downloadHandler.text;
 
@@ -169,11 +172,14 @@ public class AuthController : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(body);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
 
             // HTTPS 인증서 무시 (개발용)
             request.certificateHandler = new BypassCertificateHandler();
 
+            Debug.Log($"[Auth] Register request => {request.url}, body: {json}");
             yield return request.SendWebRequest();
+            Debug.Log($"[Auth] Register response <= code: {request.responseCode}, result: {request.result}, error: {request.error}, body: {request.downloadHandler.text}");
 
             if (request.result == UnityWebRequest.Result.Success) // 201 Created
             {
@@ -203,16 +209,20 @@ public class AuthController : MonoBehaviour
     [Serializable]
     public class LoginRequest
     {
-        public string Id;
-        public string Pw;
+        public string id;
+        public string pw;
     }
 
     [Serializable]
     public class LoginResponse
     {
+        [JsonProperty("jwt")]
         public string Jwt;
+        [JsonProperty("userId")]
         public string UserId;
+        [JsonProperty("nickname")]
         public string Nickname;
+        [JsonProperty("skinIndex")]
         public int SkinIndex;
     }
 
@@ -300,4 +310,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-
