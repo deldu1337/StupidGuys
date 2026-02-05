@@ -11,10 +11,8 @@ public class SettingMenuManager : MonoBehaviour
     [SerializeField] private GameObject _exitButton;
 
     private bool _isSettingMenuOpen = false;
-    const string BASE_URL = "https://stupidguys-auth-server.onrender.com";
-
-    //const string BASE_URL = "http://localhost:7018";
-
+    
+    
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape)) SettingMenu(_isSettingMenuOpen);
@@ -85,7 +83,7 @@ public class SettingMenuManager : MonoBehaviour
         var logoutDto = new LogoutRequest { id = userId };
         string json = JsonUtility.ToJson(logoutDto);
 
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/logout", "POST"))
+        using (UnityWebRequest request = new UnityWebRequest($"{AuthServerConfig.BaseUrl}/auth/logout", "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);

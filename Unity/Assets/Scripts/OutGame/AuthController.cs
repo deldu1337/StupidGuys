@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,8 +17,6 @@ public class AuthController : MonoBehaviour
     public string jwt => _jwt;
     public bool isLoggedIn => string.IsNullOrEmpty(_jwt) == false;
 
-    //const string BASE_URL = "https://localhost:7018";
-    const string BASE_URL = "https://stupidguys-auth-server.onrender.com";
     string _jwt;
     string _userId;
 
@@ -71,7 +69,7 @@ public class AuthController : MonoBehaviour
         string json = JsonUtility.ToJson(loginDto);
         bool success = false;
 
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/login", "POST"))
+        using (UnityWebRequest request = new UnityWebRequest($"{AuthServerConfig.BaseUrl}/auth/login", "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);
@@ -163,7 +161,7 @@ public class AuthController : MonoBehaviour
         string json = JsonUtility.ToJson(registerDto);
 
         // 주소: /user/create (UserController의 라우트와 일치)
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/user/create", "POST"))
+        using (UnityWebRequest request = new UnityWebRequest($"{AuthServerConfig.BaseUrl}/user/create", "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);
@@ -185,12 +183,12 @@ public class AuthController : MonoBehaviour
                 // 409 Conflict (중복) 또는 400 Bad Request 처리
                 if (request.responseCode == 409)
                 {
-                    _view.ShowAlertPanel("Bad Request");
+                    _view.ShowAlertPanel("Already registered ID");
                 }
                 else
                 {
                     _view.ShowAlertPanel("Failed Register");
-                    Debug.LogError($"가입 에러: {request.downloadHandler.text}");
+                    Debug.LogError($"가입 에러: result={request.result}, code={request.responseCode}, error={request.error}, body={request.downloadHandler.text}, url={AuthServerConfig.BaseUrl}/user/create");
                 }
             }
         }
@@ -241,7 +239,7 @@ public class AuthController : MonoBehaviour
         string json = JsonUtility.ToJson(deleteDto);
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
         // 2. URL 설정
-        string url = $"{BASE_URL}/user/{userId}";
+        string url = $"{AuthServerConfig.BaseUrl}/user/{userId}";
 
         // 3. UnityWebRequest 생성 ("DELETE" 명시)
         using (UnityWebRequest request = new UnityWebRequest(url, "DELETE"))
@@ -300,4 +298,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-

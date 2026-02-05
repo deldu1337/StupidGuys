@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 public class MatchmakingClient : MonoBehaviour
 {
-    private const string MatchmakingServerUrlEnv = "3.37.215.9";
+    private const string MatchmakingServerUrlEnv = "MATCHMAKING_SERVER_URL";
 
     [SerializeField] private string serverUrl = "";
 
