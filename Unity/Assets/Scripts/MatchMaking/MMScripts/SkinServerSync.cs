@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -7,9 +7,6 @@ namespace MatchMaking.MMScripts
 {
     public class SkinServerSync : MonoBehaviour
     {
-        const string BASE_URL = "https://stupidguys-auth-server.onrender.com";
-        //const string BASE_URL = "https://localhost:7018";
-
         [System.Serializable]
         private class UpdateSkinRequest
         {
@@ -21,7 +18,7 @@ namespace MatchMaking.MMScripts
             var dto = new UpdateSkinRequest { SkinIndex = index };
             string json = JsonUtility.ToJson(dto);
 
-            using (var req = new UnityWebRequest($"{BASE_URL}/user/skin", "PUT"))
+            using (var req = new UnityWebRequest($"{AuthServerConfig.BaseUrl}/user/skin", "PUT"))
             {
                 req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
                 req.downloadHandler = new DownloadHandlerBuffer();

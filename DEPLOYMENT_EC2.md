@@ -1,6 +1,7 @@
-# EC2 마이그레이션 가이드 (Matchmaking + Game Server)
+# EC2 마이그레이션 가이드 (Matchmaking + Game Server + Auth/PostgreSQL)
 
-이 문서는 기존 Render/PlayFab 기반에서 AWS EC2로 매치메이킹/게임 서버를 옮기는 절차를 정리합니다.
+이 문서는 기존 Render/PlayFab 기반에서 AWS EC2로 매치메이킹/게임 서버를 옮기는 절차와,
+Auth 서버의 PostgreSQL DB를 **Render → EC2(도커 컨테이너)** 로 이전하는 흐름을 정리합니다.
 
 ## 1) Elastic IP를 어디에 넣나요?
 
@@ -43,6 +44,12 @@ EC2에서 매치메이킹 서버를 서비스한다면, `MATCHMAKING_SERVER_URL`
 ├─ matchmaking/               # ASP.NET Core SignalR 서버
 │  ├─ StupidGuysServer/        # publish 결과물
 │  └─ run.sh                   # 실행 스크립트
+├─ auth/                       # Auth API 서버
+│  ├─ Auth/                     # publish 결과물
+│  └─ run.sh                   # 실행 스크립트
+├─ postgres/                   # Auth DB (Docker)
+│  ├─ docker-compose.yml
+│  └─ data/                    # PostgreSQL 볼륨 데이터
 ├─ gameserver/                 # Unity Dedicated Server 빌드(20개 프로세스)
 │  ├─ StupidGuysServer.x86_64
 │  ├─ StupidGuysServer_Data/
@@ -127,3 +134,102 @@ EC2에서 매치메이킹 서버를 서비스한다면, `MATCHMAKING_SERVER_URL`
 - 서버가 재부팅되어도 계속 실행되도록 `systemd` 서비스나 `tmux/screen` 사용 권장
 - 로그는 `/opt/stupidguys/logs/`에 리다이렉션하거나 `journalctl`로 관리
 - 필요한 경우 Nginx 리버스 프록시로 `:10000`을 숨길 수 있음
+
+---
+
+## 8) Auth DB (PostgreSQL) → EC2 Docker 이전
+
+Auth 서버는 `DATABASE_URL` 또는 `appsettings.json`의 `Default` 연결 문자열을 사용합니다.
+Render URL이 아닌 **일반 PostgreSQL 연결 문자열**을 넣으면 그대로 사용됩니다.
+
+### 8-1) EC2 도커 PostgreSQL 구성
+
+`/opt/stupidguys/postgres/docker-compose.yml` 예시:
+
+```yaml
+version: "3.9"
+services:
+  auth-postgres:
+    image: postgres:16
+    container_name: auth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stupidguys_auth
+      POSTGRES_USER: stupidguys
+      POSTGRES_PASSWORD: "change-me"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /opt/stupidguys/postgres/data:/var/lib/postgresql/data
+```
+
+실행:
+```bash
+cd /opt/stupidguys/postgres
+docker compose up -d
+```
+
+> 보안그룹에서 `5432/tcp`는 **필요한 서버만** 접근하도록 제한하세요.
+> 같은 EC2에서 Auth 서버를 돌릴 경우, 외부 포트 오픈 없이 로컬 접속(127.0.0.1)만 허용해도 됩니다.
+
+### 8-2) Render → EC2 데이터 마이그레이션
+
+1. **Render DB 덤프**
+   ```bash
+   pg_dump "$RENDER_DATABASE_URL" --format=custom --file=auth.dump
+   ```
+2. **EC2로 업로드**
+   ```bash
+   scp auth.dump ubuntu@<ElasticIP>:/opt/stupidguys/postgres/
+   ```
+3. **EC2에서 복원**
+   ```bash
+   pg_restore \
+     --dbname="postgresql://stupidguys:change-me@localhost:5432/stupidguys_auth" \
+     --clean --if-exists \
+     /opt/stupidguys/postgres/auth.dump
+   ```
+
+### 8-3) Auth 서버 환경 변수(연결 문자열)
+
+EC2에서 Auth 서버가 사용할 `DATABASE_URL` 예시:
+
+```bash
+export DATABASE_URL="Host=127.0.0.1;Port=5432;Database=stupidguys_auth;Username=stupidguys;Password=change-me"
+```
+
+> 같은 EC2 내부에서만 접근하는 경우 `Host=127.0.0.1` 또는 `Host=localhost` 사용.
+> 다른 서버에서 접근할 경우 `Host=<EC2_PRIVATE_IP>`를 사용하고 보안그룹을 제한하세요.
+
+### 8-4) Auth 서버 배포/실행
+
+1. **로컬에서 publish**
+   ```bash
+   cd Server/Persistence/Auth
+   dotnet publish -c Release -o publish
+   ```
+2. **EC2로 업로드**
+   ```bash
+   scp -r publish/ ubuntu@<ElasticIP>:/opt/stupidguys/auth/Auth/
+   ```
+3. **EC2 실행 스크립트 예시**
+   ```bash
+   # /opt/stupidguys/auth/run.sh
+   export ASPNETCORE_URLS=http://0.0.0.0:5000
+   export DATABASE_URL="Host=127.0.0.1;Port=5432;Database=stupidguys_auth;Username=stupidguys;Password=change-me"
+   dotnet /opt/stupidguys/auth/Auth/Auth.dll
+   ```
+4. **실행**
+   ```bash
+   chmod +x /opt/stupidguys/auth/run.sh
+   /opt/stupidguys/auth/run.sh
+   ```
+
+### 8-5) 수정 포인트 요약
+
+- **환경 변수 변경**
+  - `DATABASE_URL`: Render의 `postgresql://` URL → EC2 내부 PostgreSQL 연결 문자열
+  - 필요 시 `ASPNETCORE_URLS`로 Auth 서버 바인딩 포트 지정
+- **인프라 변경**
+  - Render DB 사용 중지 → EC2 Docker(PostgreSQL) 컨테이너 운영
+  - EC2 보안그룹에서 DB 포트 접근 범위를 제한
