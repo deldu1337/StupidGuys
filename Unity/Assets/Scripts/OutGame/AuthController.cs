@@ -183,12 +183,12 @@ public class AuthController : MonoBehaviour
                 // 409 Conflict (중복) 또는 400 Bad Request 처리
                 if (request.responseCode == 409)
                 {
-                    _view.ShowAlertPanel("Bad Request");
+                    _view.ShowAlertPanel("Already registered ID");
                 }
                 else
                 {
                     _view.ShowAlertPanel("Failed Register");
-                    Debug.LogError($"가입 에러: {request.downloadHandler.text}");
+                    Debug.LogError($"가입 에러: result={request.result}, code={request.responseCode}, error={request.error}, body={request.downloadHandler.text}, url={AuthServerConfig.BaseUrl}/user/create");
                 }
             }
         }
@@ -298,4 +298,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-

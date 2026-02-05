@@ -3,8 +3,9 @@ using UnityEngine;
 
 public static class AuthServerConfig
 {
-    private const string DefaultBaseUrl = "http://localhost:5000";
+    private const string DefaultBaseUrl = "http://3.37.215.9:5000";
     private const string EnvKey = "AUTH_SERVER_URL";
+    private const string MatchmakingEnvKey = "MATCHMAKING_SERVER_URL";
 
     private static string _cachedBaseUrl;
 
@@ -38,6 +39,13 @@ public static class AuthServerConfig
             return resolved;
         }
 
+        string fromMatchmaking = ResolveFromMatchmakingUrl();
+        if (!string.IsNullOrWhiteSpace(fromMatchmaking))
+        {
+            Debug.Log($"[AuthServerConfig] use {MatchmakingEnvKey} derived url: {fromMatchmaking}");
+            return fromMatchmaking;
+        }
+
         Debug.LogWarning($"[AuthServerConfig] {EnvKey} not set. fallback: {DefaultBaseUrl}");
         return DefaultBaseUrl;
     }
@@ -45,5 +53,22 @@ public static class AuthServerConfig
     private static string NormalizeUrl(string url)
     {
         return url.Trim().TrimEnd('/');
+    }
+
+    private static string ResolveFromMatchmakingUrl()
+    {
+        string matchmakingUrl = Environment.GetEnvironmentVariable(MatchmakingEnvKey);
+        if (string.IsNullOrWhiteSpace(matchmakingUrl))
+        {
+            matchmakingUrl = PlayerPrefs.GetString(MatchmakingEnvKey, string.Empty);
+        }
+
+        if (string.IsNullOrWhiteSpace(matchmakingUrl) ||
+            Uri.TryCreate(matchmakingUrl, UriKind.Absolute, out Uri uri) == false)
+        {
+            return string.Empty;
+        }
+
+        return NormalizeUrl($"{uri.Scheme}://{uri.Host}:5000");
     }
 }
