@@ -18,7 +18,7 @@ public class AuthController : MonoBehaviour
     public bool isLoggedIn => string.IsNullOrEmpty(_jwt) == false;
 
     //const string BASE_URL = "https://localhost:7018";
-    const string BASE_URL = "http://3.37.215.9:5000";
+    [SerializeField] string _baseUrl = "https://3.37.215.9:5000";
     string _jwt;
     string _userId;
 
@@ -57,6 +57,15 @@ public class AuthController : MonoBehaviour
         }
     }
 
+
+    bool IsBlockedInsecureHttp(string url)
+    {
+        // 빌드 플레이어에서 "Non-secure network connections disabled"가 켜진 경우
+        // http 요청은 SendWebRequest 단계에서 InvalidOperationException이 발생합니다.
+        return Application.isEditor == false
+            && url.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
+    }
+
     void Login(string id, string pw)
     {
         StartCoroutine(C_Login(id, pw));
@@ -67,21 +76,45 @@ public class AuthController : MonoBehaviour
         _view.SetLoginInteractables(false);
 
         // 서버의 LoginDTO가 무엇인지에 따라 변수명(Id, Pw)을 맞춰야 함
-        var loginDto = new LoginRequest { Id = id, Pw = pw };
+        var loginDto = new LoginRequest { id = id, pw = pw };
         string json = JsonUtility.ToJson(loginDto);
         bool success = false;
 
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/login", "POST"))
+        string loginUrl = $"{_baseUrl}/auth/login";
+
+        if (IsBlockedInsecureHttp(loginUrl))
+        {
+            _view.ShowAlertPanel("This build blocks HTTP. Please use HTTPS base URL or allow insecure HTTP in Player Settings.");
+            _view.SetLoginInteractables(true);
+            yield break;
+        }
+
+        using (UnityWebRequest request = new UnityWebRequest(loginUrl, "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
 
             // HTTPS 인증서 문제 해결 (개발 단계용)
             request.certificateHandler = new BypassCertificateHandler();
 
-            yield return request.SendWebRequest();
+            Debug.Log($"[Auth] Login request => {request.url}, body: {json}");
+
+            try
+            {
+                yield return request.SendWebRequest();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _view.ShowAlertPanel("Network blocked: check HTTPS/Player Settings.");
+                _view.SetLoginInteractables(true);
+                Debug.LogError($"[Auth] Login request start failed: {ex.Message}");
+                yield break;
+            }
+
+            Debug.Log($"[Auth] Login response <= code: {request.responseCode}, result: {request.result}, error: {request.error}, body: {request.downloadHandler.text}");
 
             //string responseText = request.downloadHandler.text;
 
@@ -163,17 +196,41 @@ public class AuthController : MonoBehaviour
         string json = JsonUtility.ToJson(registerDto);
 
         // 주소: /user/create (UserController의 라우트와 일치)
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/user/create", "POST"))
+        string registerUrl = $"{_baseUrl}/user/create";
+
+        if (IsBlockedInsecureHttp(registerUrl))
+        {
+            _view.ShowAlertPanel("This build blocks HTTP. Please use HTTPS base URL or allow insecure HTTP in Player Settings.");
+            _view.SetLoginInteractables(true);
+            yield break;
+        }
+
+        using (UnityWebRequest request = new UnityWebRequest(registerUrl, "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
 
             // HTTPS 인증서 무시 (개발용)
             request.certificateHandler = new BypassCertificateHandler();
 
-            yield return request.SendWebRequest();
+            Debug.Log($"[Auth] Register request => {request.url}, body: {json}");
+
+            try
+            {
+                yield return request.SendWebRequest();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _view.ShowAlertPanel("Network blocked: check HTTPS/Player Settings.");
+                _view.SetLoginInteractables(true);
+                Debug.LogError($"[Auth] Register request start failed: {ex.Message}");
+                yield break;
+            }
+
+            Debug.Log($"[Auth] Register response <= code: {request.responseCode}, result: {request.result}, error: {request.error}, body: {request.downloadHandler.text}");
 
             if (request.result == UnityWebRequest.Result.Success) // 201 Created
             {
@@ -203,16 +260,20 @@ public class AuthController : MonoBehaviour
     [Serializable]
     public class LoginRequest
     {
-        public string Id;
-        public string Pw;
+        public string id;
+        public string pw;
     }
 
     [Serializable]
     public class LoginResponse
     {
+        [JsonProperty("jwt")]
         public string Jwt;
+        [JsonProperty("userId")]
         public string UserId;
+        [JsonProperty("nickname")]
         public string Nickname;
+        [JsonProperty("skinIndex")]
         public int SkinIndex;
     }
 
@@ -300,4 +361,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-
