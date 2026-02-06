@@ -14,6 +14,7 @@ using UnityEngine.SceneManagement;
 
 public class AuthController : MonoBehaviour
 {
+    private const string LastLoggedInUserKey = "LAST_LOGGED_IN_USER";
     public string jwt => _jwt;
     public bool isLoggedIn => string.IsNullOrEmpty(_jwt) == false;
 
@@ -26,6 +27,8 @@ public class AuthController : MonoBehaviour
 
     private void Awake()
     {
+        TryCleanupStaleSession();
+
         bool isServer = MultiplayerRolesManager.ActiveMultiplayerRoleMask
             .HasFlag(MultiplayerRoleFlags.Server);
 
@@ -34,6 +37,22 @@ public class AuthController : MonoBehaviour
             SceneManager.LoadScene("InGame");
             return;
         }
+    }
+
+    private void TryCleanupStaleSession()
+    {
+        if (!PlayerPrefs.HasKey(LastLoggedInUserKey))
+            return;
+
+        string staleUserId = PlayerPrefs.GetString(LastLoggedInUserKey, string.Empty);
+        if (string.IsNullOrEmpty(staleUserId))
+        {
+            PlayerPrefs.DeleteKey(LastLoggedInUserKey);
+            PlayerPrefs.Save();
+            return;
+        }
+
+        StartCoroutine(C_LogoutSilently(staleUserId));
     }
 
     private void OnEnable()
@@ -104,6 +123,10 @@ public class AuthController : MonoBehaviour
                     NetworkBlackboard.userName = id;
                     NetworkBlackboard.skinIndex = response.SkinIndex;
                     LocalSkinSelection.Set(response.SkinIndex);
+
+                    PlayerPrefs.SetString(LastLoggedInUserKey, id);
+                    PlayerPrefs.Save();
+
                     success = true;
                     _view.ShowAlertPanel("Logged In !");
 
@@ -145,6 +168,25 @@ public class AuthController : MonoBehaviour
             _view.HideAlertPanel();
             _view.SetLoginInteractables(true);
         }
+    }
+
+    private IEnumerator C_LogoutSilently(string userId)
+    {
+        var logoutDto = new LogoutRequest { id = userId };
+        string json = JsonUtility.ToJson(logoutDto);
+
+        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/logout", "POST"))
+        {
+            byte[] body = Encoding.UTF8.GetBytes(json);
+            request.uploadHandler = new UploadHandlerRaw(body);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+        }
+
+        PlayerPrefs.DeleteKey(LastLoggedInUserKey);
+        PlayerPrefs.Save();
     }
 
     // 2. 회원가입 
@@ -224,6 +266,12 @@ public class AuthController : MonoBehaviour
         public string password;
     }
 
+    [Serializable]
+    public class LogoutRequest
+    {
+        public string id;
+    }
+
     // 로비나 설정 창에서 계정 삭제를 추가하는것이 일반적
     [Serializable]
     public class DeleteRequest
@@ -300,4 +348,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-
