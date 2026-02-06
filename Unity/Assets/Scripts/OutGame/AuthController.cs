@@ -36,6 +36,43 @@ public class AuthController : MonoBehaviour
         }
     }
 
+    private void OnApplicationQuit()
+    {
+        TryLogoutOnApplicationQuit();
+    }
+
+    private void TryLogoutOnApplicationQuit()
+    {
+        string username = NetworkBlackboard.userName;
+        if (string.IsNullOrEmpty(username))
+            return;
+
+        try
+        {
+            var logoutDto = new LogoutRequest { id = username };
+            string json = JsonUtility.ToJson(logoutDto);
+            byte[] body = Encoding.UTF8.GetBytes(json);
+
+            using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/logout", "POST"))
+            {
+                request.uploadHandler = new UploadHandlerRaw(body);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.timeout = 2;
+
+                var op = request.SendWebRequest();
+                float deadline = Time.realtimeSinceStartup + 2f;
+                while (!op.isDone && Time.realtimeSinceStartup < deadline)
+                {
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Logout on quit failed: {e.Message}");
+        }
+    }
+
     private void OnEnable()
     {
         // 뷰(UI)에 로그인 버튼과 회원가입 버튼 이벤트 연결
@@ -104,6 +141,8 @@ public class AuthController : MonoBehaviour
                     NetworkBlackboard.userName = id;
                     NetworkBlackboard.skinIndex = response.SkinIndex;
                     LocalSkinSelection.Set(response.SkinIndex);
+
+
                     success = true;
                     _view.ShowAlertPanel("Logged In !");
 
@@ -224,6 +263,12 @@ public class AuthController : MonoBehaviour
         public string password;
     }
 
+    [Serializable]
+    public class LogoutRequest
+    {
+        public string id;
+    }
+
     // 로비나 설정 창에서 계정 삭제를 추가하는것이 일반적
     [Serializable]
     public class DeleteRequest
@@ -300,4 +345,3 @@ public class AuthController : MonoBehaviour
         }
     }
 }
-

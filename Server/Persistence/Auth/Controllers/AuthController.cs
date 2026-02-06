@@ -48,7 +48,7 @@
 //        }
 
 //        [HttpPost("logout")]
-//        public async Task<IActionResult> Logout([FromBody] LogoutDTO dto)
+//        public IActionResult Logout([FromBody] LogoutDTO dto)
 //        {
 //            var user = await _userRepository.GetByUserNameAsync(dto.id);
 
@@ -82,9 +82,12 @@ namespace Auth.Controllers
     {
         private readonly IUserRepository _userRepository;
 
-        // 1. static으로 선언해야 컨트롤러 인스턴스가 바뀌어도 세션이 유지됩니다.
-        // 2. 여러 요청이 동시에 들어올 때 안전하도록 ConcurrentDictionary 사용을 권장합니다.
+        // 세션ID -> 사용자 정보
         private static readonly ConcurrentDictionary<Guid, User> _loginSessions = new();
+
+        // 사용자ID -> 세션ID (중복 로그인 방지를 위한 단일 로그인 인덱스)
+        private static readonly ConcurrentDictionary<string, Guid> _activeUsers
+            = new(StringComparer.OrdinalIgnoreCase);
 
         public AuthController(IUserRepository userRepository)
         {
@@ -100,20 +103,19 @@ namespace Auth.Controllers
             if (user == null || user.Password.Equals(dto.pw) == false)
                 return Unauthorized();
 
-            // [핵심] 딕셔너리의 Value들 중 현재 로그인하려는 유저의 ID가 있는지 확인
-            var alreadyLoggedIn = _loginSessions.Values.Any(u => u.Username == dto.id);
-
-            if (alreadyLoggedIn)
+            // [핵심] 원자적 TryAdd로 동시 요청에도 중복 로그인을 차단
+            Guid sessionId = Guid.NewGuid();
+            if (!_activeUsers.TryAdd(dto.id, sessionId))
             {
-                // 이미 세션 딕셔너리에 존재하면 409 Conflict 반환
                 return Conflict(new { message = "This account is already logged in (Memory Session)." });
             }
 
-            // 로그인 성공 처리
-            Guid sessionId = Guid.NewGuid();
-
-            // 메모리 세션에 추가
-            _loginSessions.TryAdd(sessionId, user);
+            // 세션 테이블 반영 실패 시 activeUsers 롤백
+            if (!_loginSessions.TryAdd(sessionId, user))
+            {
+                _activeUsers.TryRemove(dto.id, out _);
+                return StatusCode(500, new { message = "Failed to create login session." });
+            }
 
             // 마지막 접속 시간만 DB 업데이트 (선택 사항)
             user.LastConnected = DateTime.UtcNow;
@@ -130,15 +132,18 @@ namespace Auth.Controllers
         }
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] LogoutDTO dto)
+        public IActionResult Logout([FromBody] LogoutDTO dto)
         {
-            // 딕셔너리에서 해당 Username을 가진 세션을 찾아 제거
-            var sessionToRemove = _loginSessions.FirstOrDefault(x => x.Value.Username == dto.id);
-
-            if (!sessionToRemove.Equals(default(KeyValuePair<Guid, User>)))
+            if (_activeUsers.TryRemove(dto.id, out var sessionId))
             {
-                bool result = _loginSessions.TryRemove(sessionToRemove.Key, out _);
+                _loginSessions.TryRemove(sessionId, out _);
+                return Ok();
             }
+
+            // 혹시 인덱스와 세션 딕셔너리가 어긋난 경우를 대비한 fallback
+            var sessionToRemove = _loginSessions.FirstOrDefault(x => x.Value.Username == dto.id);
+            if (!sessionToRemove.Equals(default(KeyValuePair<Guid, User>)))
+                _loginSessions.TryRemove(sessionToRemove.Key, out _);
 
             return Ok();
         }
