@@ -7,7 +7,7 @@ namespace MatchMaking.MMScripts
 {
     public class SkinServerSync : MonoBehaviour
     {
-        const string BASE_URL = "https://stupidguys-auth-server.onrender.com";
+        const string BASE_URL = "http://3.37.215.9:5000";
         //const string BASE_URL = "https://localhost:7018";
 
         [System.Serializable]
