@@ -14,7 +14,6 @@ using UnityEngine.SceneManagement;
 
 public class AuthController : MonoBehaviour
 {
-    private const string LastLoggedInUserKey = "LAST_LOGGED_IN_USER";
     public string jwt => _jwt;
     public bool isLoggedIn => string.IsNullOrEmpty(_jwt) == false;
 
@@ -27,8 +26,6 @@ public class AuthController : MonoBehaviour
 
     private void Awake()
     {
-        TryCleanupStaleSession();
-
         bool isServer = MultiplayerRolesManager.ActiveMultiplayerRoleMask
             .HasFlag(MultiplayerRoleFlags.Server);
 
@@ -39,20 +36,41 @@ public class AuthController : MonoBehaviour
         }
     }
 
-    private void TryCleanupStaleSession()
+    private void OnApplicationQuit()
     {
-        if (!PlayerPrefs.HasKey(LastLoggedInUserKey))
+        TryLogoutOnApplicationQuit();
+    }
+
+    private void TryLogoutOnApplicationQuit()
+    {
+        string username = NetworkBlackboard.userName;
+        if (string.IsNullOrEmpty(username))
             return;
 
-        string staleUserId = PlayerPrefs.GetString(LastLoggedInUserKey, string.Empty);
-        if (string.IsNullOrEmpty(staleUserId))
+        try
         {
-            PlayerPrefs.DeleteKey(LastLoggedInUserKey);
-            PlayerPrefs.Save();
-            return;
-        }
+            var logoutDto = new LogoutRequest { id = username };
+            string json = JsonUtility.ToJson(logoutDto);
+            byte[] body = Encoding.UTF8.GetBytes(json);
 
-        StartCoroutine(C_LogoutSilently(staleUserId));
+            using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/logout", "POST"))
+            {
+                request.uploadHandler = new UploadHandlerRaw(body);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.timeout = 2;
+
+                var op = request.SendWebRequest();
+                float deadline = Time.realtimeSinceStartup + 2f;
+                while (!op.isDone && Time.realtimeSinceStartup < deadline)
+                {
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Logout on quit failed: {e.Message}");
+        }
     }
 
     private void OnEnable()
@@ -124,8 +142,6 @@ public class AuthController : MonoBehaviour
                     NetworkBlackboard.skinIndex = response.SkinIndex;
                     LocalSkinSelection.Set(response.SkinIndex);
 
-                    PlayerPrefs.SetString(LastLoggedInUserKey, id);
-                    PlayerPrefs.Save();
 
                     success = true;
                     _view.ShowAlertPanel("Logged In !");
@@ -168,25 +184,6 @@ public class AuthController : MonoBehaviour
             _view.HideAlertPanel();
             _view.SetLoginInteractables(true);
         }
-    }
-
-    private IEnumerator C_LogoutSilently(string userId)
-    {
-        var logoutDto = new LogoutRequest { id = userId };
-        string json = JsonUtility.ToJson(logoutDto);
-
-        using (UnityWebRequest request = new UnityWebRequest($"{BASE_URL}/auth/logout", "POST"))
-        {
-            byte[] body = Encoding.UTF8.GetBytes(json);
-            request.uploadHandler = new UploadHandlerRaw(body);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            yield return request.SendWebRequest();
-        }
-
-        PlayerPrefs.DeleteKey(LastLoggedInUserKey);
-        PlayerPrefs.Save();
     }
 
     // 2. 회원가입 
