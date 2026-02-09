@@ -87,6 +87,9 @@ public class InGameManager : NetworkBehaviour
     // 카운트다운 길이이며 4면 3 2 1 0 순으로 내려간다
     [SerializeField] private int startCountdownTime = 4;
 
+    // 매치 종료가 감지되었을 때 프로세스를 종료하기 전 대기 시간이다
+    [SerializeField] private float serverShutdownDelaySeconds = 2f;
+
     // 클라이언트가 카운트다운 UI를 표시할 수 있게 하는 이벤트이다
     public static event Action<int> OnCountdownTick;
 
@@ -94,6 +97,9 @@ public class InGameManager : NetworkBehaviour
 
     // 서버에서만 사용하며 각 클라이언트의 스폰 배치 완료 여부를 확인한다
     private readonly HashSet<ulong> _spawnReadyClients = new HashSet<ulong>();
+
+    // 서버에서 매치 종료 처리와 프로세스 종료를 중복 실행하지 않기 위한 플래그이다
+    private bool _serverShutdownRequested = false;
 
     /// <summary>
     /// 싱글톤 참조를 초기화한다
@@ -121,6 +127,7 @@ public class InGameManager : NetworkBehaviour
 
             IsFrozen.Value = true;
             RoundStartServerTime.Value = -1;
+            _serverShutdownRequested = false;
 
             state.Value = InGameState.WaitUntilAllClientsAreConntected;
 
@@ -166,6 +173,23 @@ public class InGameManager : NetworkBehaviour
         if (connectedClientIds.Count == 0)
         {
             Server_ResetForReuse();
+        }
+    }
+
+    private void Update()
+    {
+        if (!IsServer) return;
+        if (_serverShutdownRequested) return;
+        if (state.Value != InGameState.WaitUntilContentFinished) return;
+
+        int expectedPlayers = matchInfo.Value.clientCount;
+        bool finishedByGoal = expectedPlayers > 0 && CurRank.Value >= expectedPlayers;
+        bool finishedByTimeout = RoundStartServerTime.Value >= 0 && GetRemainingTimeSeconds() <= 0f;
+
+        if (finishedByGoal || finishedByTimeout)
+        {
+            string reason = finishedByGoal ? "all players reached goal" : "round timer elapsed";
+            Server_RequestShutdownForMatchEnd(reason);
         }
     }
 
@@ -271,6 +295,7 @@ public class InGameManager : NetworkBehaviour
     private void Server_ResetForReuse()
     {
         if (!IsServer) return;
+        if (_serverShutdownRequested) return;
 
         if (_countdownRoutine != null)
         {
@@ -285,6 +310,90 @@ public class InGameManager : NetworkBehaviour
         IsFrozen.Value = true;
         RoundStartServerTime.Value = -1;
         state.Value = InGameState.WaitUntilAllClientsAreConntected;
+    }
+
+    /// <summary>
+    /// 매치 종료가 감지되면 서버 네트워크를 내려 플레이어 연결을 끊고
+    /// 배치 모드에서는 프로세스를 종료해 외부 supervisor가 재기동하도록 한다
+    /// </summary>
+    private void Server_RequestShutdownForMatchEnd(string reason)
+    {
+        if (!IsServer || _serverShutdownRequested)
+            return;
+
+        _serverShutdownRequested = true;
+        StartCoroutine(Server_ShutdownAndQuitCoroutine(reason));
+    }
+
+    private IEnumerator Server_ShutdownAndQuitCoroutine(string reason)
+    {
+        Debug.Log($"[InGameManager] Match finished ({reason}). Server will shutdown for clean restart.");
+
+        // 클라이언트의 종료 처리(예: 매치 완료 보고) 시간을 조금 보장한다
+        yield return new WaitForSeconds(serverShutdownDelaySeconds);
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        // NetworkManager가 소켓을 닫을 시간을 짧게 준다
+        yield return new WaitForSeconds(0.5f);
+
+        if (Application.isBatchMode)
+        {
+            Server_RestartCurrentProcess();
+            yield return new WaitForSeconds(0.2f);
+            Application.Quit(0);
+            yield break;
+        }
+
+        // 에디터/클라이언트 실행에서는 프로세스 종료 대신 재사용 가능한 상태로 복구한다
+        _serverShutdownRequested = false;
+        Server_ResetForReuse();
+    }
+
+
+    /// <summary>
+    /// 배치 모드 전용: 현재 실행 파일을 동일한 포트 환경에서 다시 실행해
+    /// 외부 supervisor 없이도 프로세스가 스스로 재가동되도록 한다
+    /// </summary>
+    private void Server_RestartCurrentProcess()
+    {
+        try
+        {
+            var current = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                Debug.LogError("[InGameManager] Cannot restart: current executable path is empty.");
+                return;
+            }
+
+            var port = System.Environment.GetEnvironmentVariable("GAME_SERVER_PORT");
+            if (string.IsNullOrWhiteSpace(port))
+                port = "7778";
+
+            var args = $"-batchmode -nographics -port {port} -logFile run{port}.log";
+
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = current,
+                Arguments = args,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+
+            psi.Environment["GAME_SERVER_HOST"] = System.Environment.GetEnvironmentVariable("GAME_SERVER_HOST") ?? "0.0.0.0";
+            psi.Environment["GAME_SERVER_PORT"] = port;
+            psi.Environment["USE_PLAYFAB_GSDK"] = System.Environment.GetEnvironmentVariable("USE_PLAYFAB_GSDK") ?? "false";
+
+            System.Diagnostics.Process.Start(psi);
+            Debug.Log($"[InGameManager] Restarted server process: {current} {args}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[InGameManager] Failed to restart server process: {ex.Message}");
+        }
     }
 
     /// <summary>
