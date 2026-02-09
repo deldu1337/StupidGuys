@@ -244,7 +244,8 @@ public class MatchmakingClient : MonoBehaviour
         try
         {
             Debug.Log($"[SignalR] Completing match for lobby {lobbyId}...");
-            await _connection.InvokeAsync("CompleteMatch", lobbyId);
+            var matchToken = PlayerPrefs.GetString("MatchToken", string.Empty);
+            await _connection.InvokeAsync("CompleteMatch", lobbyId, matchToken);
             Debug.Log("[SignalR] Match completion reported");
             return true;
         }
@@ -273,6 +274,7 @@ public class MatchmakingResultData
     public int LobbyId { get; set; }
     public string GameServerIP { get; set; }
     public int GameServerPort { get; set; }
+    public string MatchToken { get; set; }
     public bool Success { get; set; }
 }
 

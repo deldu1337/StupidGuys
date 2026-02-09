@@ -80,6 +80,7 @@ public class MatchmakingHub : Hub
                 LobbyId = existingLobby.Id,
                 GameServerIP = existingLobby.IsGameServerAllocated ? existingLobby.GameServerIP : string.Empty,
                 GameServerPort = existingLobby.IsGameServerAllocated ? existingLobby.GameServerPort : 0,
+                MatchToken = existingLobby.IsGameServerAllocated ? existingLobby.MatchToken : string.Empty,
                 Success = true
             };
         }
@@ -112,6 +113,7 @@ public class MatchmakingHub : Hub
                 LobbyId = lobby.Id,
                 GameServerIP = string.Empty,
                 GameServerPort = 0,
+                MatchToken = string.Empty,
                 Success = true
             };
         }
@@ -171,7 +173,7 @@ public class MatchmakingHub : Hub
         }
     }
 
-    public Task CompleteMatch(int lobbyId)
+    public Task CompleteMatch(int lobbyId, string? matchToken)
     {
         Console.WriteLine($"[SignalR] Completing match for lobby {lobbyId}");
 
@@ -179,6 +181,12 @@ public class MatchmakingHub : Hub
 
         if (lobby == null || !lobby.IsGameServerAllocated)
         {
+            return Task.CompletedTask;
+        }
+
+        if (string.IsNullOrWhiteSpace(matchToken) || !string.Equals(lobby.MatchToken, matchToken, StringComparison.Ordinal))
+        {
+            Console.WriteLine($"[SignalR] Ignoring CompleteMatch for lobby {lobbyId}: token mismatch");
             return Task.CompletedTask;
         }
 
@@ -261,6 +269,7 @@ public class MatchmakingHub : Hub
             LobbyId = lobby.Id,
             GameServerIP = lobby.GameServerIP,
             GameServerPort = lobby.GameServerPort,
+            MatchToken = lobby.MatchToken,
             Success = true
         };
 
@@ -289,5 +298,6 @@ public class MatchmakingResult
     public int LobbyId { get; set; }
     public string? GameServerIP { get; set; }
     public int GameServerPort { get; set; }
+    public string? MatchToken { get; set; }
     public bool Success { get; set; }
 }

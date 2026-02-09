@@ -308,6 +308,7 @@ public class UIManager : MonoBehaviour
 
         PlayerPrefs.SetInt("PendingMatchCompletion", 0);
         PlayerPrefs.SetInt("LobbyId", 0);
+        PlayerPrefs.SetString("MatchToken", string.Empty);
         PlayerPrefs.Save();
     }
 

@@ -95,6 +95,7 @@ public class MatchmakingView : MonoBehaviour
         {
             PlayerPrefs.SetInt("PendingMatchCompletion", 0);
             PlayerPrefs.SetInt("LobbyId", 0);
+            PlayerPrefs.SetString("MatchToken", string.Empty);
             PlayerPrefs.Save();
             Debug.Log($"[MatchmakingView] Previous lobby {lobbyId} completion reported");
         }
@@ -164,6 +165,7 @@ public class MatchmakingView : MonoBehaviour
         PlayerPrefs.SetString("GameServerIP", result.GameServerIP);
         PlayerPrefs.SetInt("GameServerPort", result.GameServerPort);
         PlayerPrefs.SetInt("LobbyId", result.LobbyId);
+        PlayerPrefs.SetString("MatchToken", result.MatchToken ?? string.Empty);
         PlayerPrefs.SetInt("PendingMatchCompletion", 1);
         PlayerPrefs.Save();
 

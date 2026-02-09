@@ -17,6 +17,7 @@ namespace StupidGuysServer.Models
         public int GameServerPort { get; set; }
         public bool IsGameServerAllocated { get; set; }
         public bool IsMatchFinalized { get; private set; }
+        public string? MatchToken { get; private set; }
         public CancellationTokenSource? AllocationCancellation { get; private set; }
 
         public Lobby(int id, int maxPlayers)
@@ -116,6 +117,7 @@ namespace StupidGuysServer.Models
                 GameServerIP = host;
                 GameServerPort = port;
                 IsGameServerAllocated = true;
+                MatchToken = Guid.NewGuid().ToString("N");
                 IsMatchFinalized = true;
                 return true;
             }
