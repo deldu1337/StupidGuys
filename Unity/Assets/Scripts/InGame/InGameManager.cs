@@ -369,26 +369,31 @@ public class InGameManager : NetworkBehaviour
                 return;
             }
 
+            var exeDir = System.IO.Path.GetDirectoryName(current);
             var port = System.Environment.GetEnvironmentVariable("GAME_SERVER_PORT");
             if (string.IsNullOrWhiteSpace(port))
                 port = "7778";
 
-            var args = $"-batchmode -nographics -port {port} -logFile run{port}.log";
+            var host = System.Environment.GetEnvironmentVariable("GAME_SERVER_HOST") ?? "0.0.0.0";
+            var usePlayFab = System.Environment.GetEnvironmentVariable("USE_PLAYFAB_GSDK") ?? "false";
+
+            // 부모 프로세스가 소켓을 완전히 반납한 뒤 자식이 뜨도록 지연 실행한다
+            // dedicated server 빌드는 기본적으로 headless이므로 -batchmode/-nographics는 재기동 시 생략한다
+            string command =
+                $"cd '{exeDir}' && " +
+                $"GAME_SERVER_HOST='{host}' GAME_SERVER_PORT='{port}' USE_PLAYFAB_GSDK='{usePlayFab}' " +
+                $"nohup '{current}' -port {port} -logFile run{port}.log >/dev/null 2>&1 &";
 
             var psi = new System.Diagnostics.ProcessStartInfo
             {
-                FileName = current,
-                Arguments = args,
+                FileName = "/bin/bash",
+                Arguments = $"-lc \"sleep 1; {command}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
 
-            psi.Environment["GAME_SERVER_HOST"] = System.Environment.GetEnvironmentVariable("GAME_SERVER_HOST") ?? "0.0.0.0";
-            psi.Environment["GAME_SERVER_PORT"] = port;
-            psi.Environment["USE_PLAYFAB_GSDK"] = System.Environment.GetEnvironmentVariable("USE_PLAYFAB_GSDK") ?? "false";
-
             System.Diagnostics.Process.Start(psi);
-            Debug.Log($"[InGameManager] Restarted server process: {current} {args}");
+            Debug.Log($"[InGameManager] Scheduled server restart: {current} -port {port}");
         }
         catch (Exception ex)
         {
