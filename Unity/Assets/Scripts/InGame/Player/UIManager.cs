@@ -303,7 +303,12 @@ public class UIManager : MonoBehaviour
         if (!completed)
         {
             Debug.LogWarning($"[UI] Failed to report match completion for lobby {lobbyId}");
+            return;
         }
+
+        PlayerPrefs.SetInt("PendingMatchCompletion", 0);
+        PlayerPrefs.SetInt("LobbyId", 0);
+        PlayerPrefs.Save();
     }
 
     /// <summary>

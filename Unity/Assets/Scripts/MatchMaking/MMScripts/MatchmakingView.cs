@@ -68,11 +68,39 @@ public class MatchmakingView : MonoBehaviour
 
         if (success)
         {
+            await ReportPendingMatchCompletionAsync();
             UpdateStatus("Connected! Click 'Find Match' to start");
         }
         else
         {
             UpdateStatus("Failed to connect to server");
+        }
+    }
+
+
+    private async Task ReportPendingMatchCompletionAsync()
+    {
+        int pending = PlayerPrefs.GetInt("PendingMatchCompletion", 0);
+        int lobbyId = PlayerPrefs.GetInt("LobbyId", 0);
+
+        if (pending != 1 || lobbyId <= 0)
+        {
+            return;
+        }
+
+        UpdateStatus($"Finalizing previous match (Lobby #{lobbyId})...");
+
+        bool completed = await client.CompleteMatchAsync(lobbyId);
+        if (completed)
+        {
+            PlayerPrefs.SetInt("PendingMatchCompletion", 0);
+            PlayerPrefs.SetInt("LobbyId", 0);
+            PlayerPrefs.Save();
+            Debug.Log($"[MatchmakingView] Previous lobby {lobbyId} completion reported");
+        }
+        else
+        {
+            Debug.LogWarning($"[MatchmakingView] Failed to finalize previous lobby {lobbyId}");
         }
     }
 
@@ -136,6 +164,7 @@ public class MatchmakingView : MonoBehaviour
         PlayerPrefs.SetString("GameServerIP", result.GameServerIP);
         PlayerPrefs.SetInt("GameServerPort", result.GameServerPort);
         PlayerPrefs.SetInt("LobbyId", result.LobbyId);
+        PlayerPrefs.SetInt("PendingMatchCompletion", 1);
         PlayerPrefs.Save();
 
         Debug.Log($"[MatchmakingView] Loading game with server: {result.GameServerIP}:{result.GameServerPort}");
