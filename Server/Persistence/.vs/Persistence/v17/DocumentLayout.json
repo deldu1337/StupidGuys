@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\",
+  "WorkspaceRootPath": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{334F3B23-EFE8-6F1A-5E5F-9A2275D56E28}|Auth\\Auth.csproj|c:\\users\\pc\\desktop\\team2\\server\\persistence\\auth\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{334F3B23-EFE8-6F1A-5E5F-9A2275D56E28}|Auth\\Auth.csproj|c:\\users\\deldu\\documents\\github\\stupidguys\\server\\persistence\\auth\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{334F3B23-EFE8-6F1A-5E5F-9A2275D56E28}|Auth\\Auth.csproj|solutionrelative:auth\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -14,15 +14,19 @@
       "DocumentGroups": [
         {
           "DockedWidth": 2000,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:3:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "AuthController.cs",
-              "DocumentMoniker": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\Auth\\Controllers\\AuthController.cs",
+              "DocumentMoniker": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Controllers\\AuthController.cs",
               "RelativeDocumentMoniker": "Auth\\Controllers\\AuthController.cs",
-              "ToolTip": "C:\\Users\\PC\\Desktop\\Team2\\Server\\Persistence\\Auth\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Controllers\\AuthController.cs",
               "RelativeToolTip": "Auth\\Controllers\\AuthController.cs",
               "ViewState": "AgIAAFEAAAAAAAAAAAAuwF0AAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",

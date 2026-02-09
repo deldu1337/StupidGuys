@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "8KFShn383+0=",
+  "dgSpecHash": "Od/HlHWrtek=",
   "success": true,
-  "projectFilePath": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj",
+  "projectFilePath": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Auth.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\deldu\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\deldu\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.22\\microsoft.aspnetcore.authentication.jwtbearer.8.0.22.nupkg.sha512",
