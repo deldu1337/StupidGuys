@@ -47,11 +47,14 @@ public class MatchmakingHub : Hub
 
             if (lobby.MemberCount == 0)
             {
-                lobby.AllocationCancellation?.Cancel();
-
-                if (lobby.IsGameServerAllocated)
+                if (lobby.IsMatchFinalized)
                 {
-                    _gameServerAllocator.Release(lobby.GameServerPort);
+                    Console.WriteLine($"[SignalR] Lobby {lobby.Id} is finalized; waiting for CompleteMatch before cleanup");
+                }
+                else
+                {
+                    lobby.AllocationCancellation?.Cancel();
+                    _lobbiesManager.RemoveLobby(lobby.Id);
                 }
             }
 
@@ -153,14 +156,15 @@ public class MatchmakingHub : Hub
 
             if (remainCount == 0)
             {
-                lobby.AllocationCancellation?.Cancel();
-
-                if (lobby.IsGameServerAllocated)
+                if (lobby.IsMatchFinalized)
                 {
-                    _gameServerAllocator.Release(lobby.GameServerPort);
+                    Console.WriteLine($"[SignalR] Lobby {lobby.Id} is finalized; waiting for CompleteMatch before cleanup");
                 }
-
-                _lobbiesManager.RemoveLobby(lobby.Id);
+                else
+                {
+                    lobby.AllocationCancellation?.Cancel();
+                    _lobbiesManager.RemoveLobby(lobby.Id);
+                }
             }
 
             await NotifyLobbyUpdated(lobby);

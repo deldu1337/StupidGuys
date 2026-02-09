@@ -9,18 +9,11 @@ namespace StupidGuysServer.Services
         private readonly HashSet<int> _allocatedPorts = new();
         private readonly object _lock = new();
 
-        public GameServerAllocator(int portRangeStart, int portRangeEnd, int? fixedPort = null)
+        public GameServerAllocator(int portRangeStart, int portRangeEnd)
         {
             var ports = Enumerable.Range(portRangeStart, portRangeEnd - portRangeStart + 1);
 
-            if (fixedPort.HasValue && fixedPort.Value >= portRangeStart && fixedPort.Value <= portRangeEnd)
-            {
-                _availablePorts = new SortedSet<int> { fixedPort.Value };
-            }
-            else
-            {
-                _availablePorts = new SortedSet<int>(ports);
-            }
+            _availablePorts = new SortedSet<int>(ports);
         }
 
         public bool TryAllocate(out int port)

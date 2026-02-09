@@ -57,7 +57,7 @@ namespace StupidGuysServer.Services
             {
                 if (lobby.TryRemoveMember(connectionId, out int remainCount))
                 {
-                    if (remainCount == 0)
+                    if (remainCount == 0 && !lobby.IsMatchFinalized)
                     {
                         RemoveLobby(lobby.Id);
                     }
