@@ -147,11 +147,6 @@ public class MatchmakingHub : Hub
             return;
         }
 
-        if (lobby.IsMatchFinalized)
-        {
-            return;
-        }
-
         if (lobby.TryRemoveMember(connectionId, out int remainCount))
         {
             await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(lobby.Id));

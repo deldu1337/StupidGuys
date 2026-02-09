@@ -55,11 +55,6 @@ namespace StupidGuysServer.Services
         {
             foreach (var lobby in _lobbies.Values)
             {
-                if (lobby.IsMatchFinalized)
-                {
-                    continue;
-                }
-
                 if (lobby.TryRemoveMember(connectionId, out int remainCount))
                 {
                     if (remainCount == 0)
