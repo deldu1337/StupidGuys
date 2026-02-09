@@ -14,7 +14,7 @@ builder.Services.AddSingleton(provider =>
 {
     var settings = provider.GetRequiredService<MatchmakingSettings>();
     var gameServerSettings = provider.GetRequiredService<GameServerSettings>();
-    return new GameServerAllocator(gameServerSettings.Host, settings.PortRangeStart, settings.PortRangeEnd);
+    return new GameServerAllocator(settings.PortRangeStart, settings.PortRangeEnd, gameServerSettings.Port);
 });
 
 builder.Services.AddCors(options =>

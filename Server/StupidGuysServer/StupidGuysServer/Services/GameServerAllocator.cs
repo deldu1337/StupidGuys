@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 
 namespace StupidGuysServer.Services
 {
@@ -10,35 +8,36 @@ namespace StupidGuysServer.Services
         private readonly SortedSet<int> _availablePorts;
         private readonly HashSet<int> _allocatedPorts = new();
         private readonly object _lock = new();
-        private readonly string _gameServerHost;
 
-        public GameServerAllocator(string gameServerHost, int portRangeStart, int portRangeEnd)
+        public GameServerAllocator(int portRangeStart, int portRangeEnd, int? fixedPort = null)
         {
-            _gameServerHost = gameServerHost;
-            _availablePorts = new SortedSet<int>(Enumerable.Range(portRangeStart, portRangeEnd - portRangeStart + 1));
+            var ports = Enumerable.Range(portRangeStart, portRangeEnd - portRangeStart + 1);
+
+            if (fixedPort.HasValue && fixedPort.Value >= portRangeStart && fixedPort.Value <= portRangeEnd)
+            {
+                _availablePorts = new SortedSet<int> { fixedPort.Value };
+            }
+            else
+            {
+                _availablePorts = new SortedSet<int>(ports);
+            }
         }
 
         public bool TryAllocate(out int port)
         {
             lock (_lock)
             {
-                foreach (var candidate in _availablePorts.ToList())
+                if (_availablePorts.Count == 0)
                 {
-                    if (!IsPortReachable(_gameServerHost, candidate))
-                    {
-                        continue;
-                    }
-
-                    _availablePorts.Remove(candidate);
-                    _allocatedPorts.Add(candidate);
-
-                    port = candidate;
-                    return true;
+                    port = 0;
+                    return false;
                 }
-            }
 
-            port = 0;
-            return false;
+                port = _availablePorts.Min;
+                _availablePorts.Remove(port);
+                _allocatedPorts.Add(port);
+                return true;
+            }
         }
 
         public void Release(int port)
@@ -49,22 +48,6 @@ namespace StupidGuysServer.Services
                 {
                     _availablePorts.Add(port);
                 }
-            }
-        }
-
-        private static bool IsPortReachable(string host, int port)
-        {
-            try
-            {
-                using var tcpClient = new TcpClient();
-                var connectTask = tcpClient.ConnectAsync(host, port);
-                var completed = connectTask.Wait(TimeSpan.FromMilliseconds(300));
-
-                return completed && tcpClient.Connected;
-            }
-            catch
-            {
-                return false;
             }
         }
     }
