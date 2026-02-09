@@ -66,6 +66,21 @@ public class MatchmakingHub : Hub
         string connectionId = Context.ConnectionId;
         Console.WriteLine($"[SignalR] {connectionId} requested FindOrCreateLobby (maxPlayers: {maxPlayers})");
 
+        var existingLobby = _lobbiesManager.FindLobbyByConnectionId(connectionId);
+        if (existingLobby != null)
+        {
+            await Groups.AddToGroupAsync(connectionId, GetLobbyGroupName(existingLobby.Id));
+            Console.WriteLine($"[SignalR] {connectionId} already in lobby {existingLobby.Id}, returning existing lobby");
+
+            return new MatchmakingResult
+            {
+                LobbyId = existingLobby.Id,
+                GameServerIP = existingLobby.IsGameServerAllocated ? existingLobby.GameServerIP : string.Empty,
+                GameServerPort = existingLobby.IsGameServerAllocated ? existingLobby.GameServerPort : 0,
+                Success = true
+            };
+        }
+
         var lobby = _lobbiesManager.FindAvailableLobby();
 
         if (lobby == null)
@@ -97,11 +112,9 @@ public class MatchmakingHub : Hub
                 Success = true
             };
         }
-        else
-        {
-            Console.WriteLine($"[SignalR] Failed to add {connectionId} to lobby {lobby.Id}");
-            throw new HubException("Failed to join lobby");
-        }
+
+        Console.WriteLine($"[SignalR] Failed to add {connectionId} to lobby {lobby.Id}");
+        throw new HubException("Failed to join lobby");
     }
 
     public LobbyStatus GetLobbyStatus(int lobbyId)

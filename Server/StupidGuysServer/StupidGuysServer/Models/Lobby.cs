@@ -48,6 +48,15 @@ namespace StupidGuysServer.Models
             }
         }
 
+
+        public bool ContainsMember(string connectionId)
+        {
+            lock (_gate)
+            {
+                return _members.Contains(connectionId);
+            }
+        }
+
         public bool TryAddMember(string connectionId, out int remainMemberCount)
         {
             lock (_gate)

@@ -45,6 +45,12 @@ namespace StupidGuysServer.Services
             return lobby;
         }
 
+
+        public Lobby? FindLobbyByConnectionId(string connectionId)
+        {
+            return _lobbies.Values.FirstOrDefault(lobby => lobby.ContainsMember(connectionId));
+        }
+
         public Lobby? RemovePlayerFromAllLobbies(string connectionId)
         {
             foreach (var lobby in _lobbies.Values)
