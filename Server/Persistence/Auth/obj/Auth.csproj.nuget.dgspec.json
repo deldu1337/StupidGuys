@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj": {}
+    "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Auth.csproj": {}
   },
   "projects": {
-    "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj": {
+    "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Auth.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj",
+        "projectUniqueName": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Auth.csproj",
         "projectName": "Auth",
-        "projectPath": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\Auth.csproj",
+        "projectPath": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\Auth.csproj",
         "packagesPath": "C:\\Users\\deldu\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\deldu\\Downloads\\StupidGuys-Auth-Server-main\\Auth\\obj\\",
+        "outputPath": "C:\\Users\\deldu\\Documents\\GitHub\\StupidGuys\\Server\\Persistence\\Auth\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
