@@ -1,32 +1,39 @@
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace StupidGuysServer.Services
 {
     public class GameServerAllocator
     {
-        private readonly ConcurrentQueue<int> _availablePorts;
+        private readonly SortedSet<int> _availablePorts;
         private readonly HashSet<int> _allocatedPorts = new();
         private readonly object _lock = new();
+        private readonly string _gameServerHost;
 
-        public GameServerAllocator(int portRangeStart, int portRangeEnd)
+        public GameServerAllocator(string gameServerHost, int portRangeStart, int portRangeEnd)
         {
-            var ports = Enumerable.Range(portRangeStart, portRangeEnd - portRangeStart + 1);
-            _availablePorts = new ConcurrentQueue<int>(ports);
+            _gameServerHost = gameServerHost;
+            _availablePorts = new SortedSet<int>(Enumerable.Range(portRangeStart, portRangeEnd - portRangeStart + 1));
         }
 
         public bool TryAllocate(out int port)
         {
             lock (_lock)
             {
-                while (_availablePorts.TryDequeue(out var candidate))
+                foreach (var candidate in _availablePorts.ToList())
                 {
-                    if (_allocatedPorts.Add(candidate))
+                    if (!IsPortReachable(_gameServerHost, candidate))
                     {
-                        port = candidate;
-                        return true;
+                        continue;
                     }
+
+                    _availablePorts.Remove(candidate);
+                    _allocatedPorts.Add(candidate);
+
+                    port = candidate;
+                    return true;
                 }
             }
 
@@ -40,8 +47,24 @@ namespace StupidGuysServer.Services
             {
                 if (_allocatedPorts.Remove(port))
                 {
-                    _availablePorts.Enqueue(port);
+                    _availablePorts.Add(port);
                 }
+            }
+        }
+
+        private static bool IsPortReachable(string host, int port)
+        {
+            try
+            {
+                using var tcpClient = new TcpClient();
+                var connectTask = tcpClient.ConnectAsync(host, port);
+                var completed = connectTask.Wait(TimeSpan.FromMilliseconds(300));
+
+                return completed && tcpClient.Connected;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

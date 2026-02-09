@@ -1,5 +1,6 @@
 ﻿using StupidGuysServer.Models;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace StupidGuysServer.Services
@@ -8,6 +9,7 @@ namespace StupidGuysServer.Services
     {
         private readonly ConcurrentDictionary<int, Lobby> _lobbies = new();
         private int _nextLobbyId = 1;
+        private readonly SortedSet<int> _reusableLobbyIds = new();
         private readonly object _idLock = new object();
 
         public Lobby? FindAvailableLobby()
@@ -20,7 +22,15 @@ namespace StupidGuysServer.Services
             int lobbyId;
             lock (_idLock)
             {
-                lobbyId = _nextLobbyId++;
+                if (_reusableLobbyIds.Count > 0)
+                {
+                    lobbyId = _reusableLobbyIds.Min;
+                    _reusableLobbyIds.Remove(lobbyId);
+                }
+                else
+                {
+                    lobbyId = _nextLobbyId++;
+                }
             }
 
             var lobby = new Lobby(lobbyId, maxPlayers);
@@ -48,7 +58,7 @@ namespace StupidGuysServer.Services
                 {
                     if (remainCount == 0)
                     {
-                        _lobbies.TryRemove(lobby.Id, out _);
+                        RemoveLobby(lobby.Id);
                     }
                     return lobby;
                 }
@@ -58,7 +68,17 @@ namespace StupidGuysServer.Services
 
         public bool RemoveLobby(int lobbyId)
         {
-            return _lobbies.TryRemove(lobbyId, out _);
+            if (!_lobbies.TryRemove(lobbyId, out _))
+            {
+                return false;
+            }
+
+            lock (_idLock)
+            {
+                _reusableLobbyIds.Add(lobbyId);
+            }
+
+            return true;
         }
     }
 }

@@ -13,7 +13,8 @@ builder.Services.AddSingleton(MatchmakingSettings.FromEnvironment());
 builder.Services.AddSingleton(provider =>
 {
     var settings = provider.GetRequiredService<MatchmakingSettings>();
-    return new GameServerAllocator(settings.PortRangeStart, settings.PortRangeEnd);
+    var gameServerSettings = provider.GetRequiredService<GameServerSettings>();
+    return new GameServerAllocator(gameServerSettings.Host, settings.PortRangeStart, settings.PortRangeEnd);
 });
 
 builder.Services.AddCors(options =>
