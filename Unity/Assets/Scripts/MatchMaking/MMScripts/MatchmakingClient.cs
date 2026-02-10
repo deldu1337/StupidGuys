@@ -5,16 +5,15 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 public class MatchmakingClient : MonoBehaviour
 {
-    private const string MatchmakingServerUrlEnv = "3.37.215.9";
+    private const string DefaultServerUrl = "http://3.37.215.9:10000/matchmaking";
 
     [SerializeField] private string serverUrl = "";
-
     [SerializeField] private int maxPlayers = 6;
 
     private HubConnection _connection;
     private MatchmakingResultData _currentMatchResult;
 
-    private int? _currentLobbyId;
+    public static MatchmakingClient Instance { get; private set; }
 
     public event Action<LobbyStatusData> OnLobbyUpdated;
     public event Action<MatchmakingResultData> OnMatchAllocated;
@@ -26,6 +25,15 @@ public class MatchmakingClient : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         serverUrl = ResolveServerUrl();
         _connection = new HubConnectionBuilder()
             .WithUrl(serverUrl)
@@ -46,13 +54,7 @@ public class MatchmakingClient : MonoBehaviour
             return serverUrl;
         }
 
-        var envUrl = Environment.GetEnvironmentVariable(MatchmakingServerUrlEnv);
-        if (!string.IsNullOrWhiteSpace(envUrl))
-        {
-            return envUrl;
-        }
-
-        return "http://3.37.215.9:10000/matchmaking";
+        return DefaultServerUrl;
     }
 
     private void RegisterServerEvents()
@@ -69,7 +71,8 @@ public class MatchmakingClient : MonoBehaviour
 
         _connection.On<MatchmakingResultData>("MatchAllocated", (result) =>
         {
-            Debug.Log($"[SignalR] Match allocated: {result.GameServerIP}:{result.GameServerPort}");
+            Debug.Log($"[SignalR] Match allocated: {result.GameServerIP}:{result.GameServerPort} (lobby {result.LobbyId})");
+            _currentMatchResult = result;
 
             UnityMainThreadDispatcher.Enqueue(() =>
             {
@@ -117,13 +120,17 @@ public class MatchmakingClient : MonoBehaviour
     {
         if (_connection.State != HubConnectionState.Connected)
         {
-            Debug.LogError("[SignalR] Not connected to server!");
-            OnError?.Invoke("Not connected to server");
-            return null;
+            bool connected = await ConnectAsync();
+            if (!connected)
+            {
+                OnError?.Invoke("Not connected to server");
+                return null;
+            }
         }
 
         try
         {
+            _currentMatchResult = null;
             Debug.Log($"[SignalR] Requesting matchmaking (maxPlayers: {maxPlayers})...");
 
             var result = await _connection.InvokeAsync<MatchmakingResultData>(
@@ -134,7 +141,6 @@ public class MatchmakingClient : MonoBehaviour
             _currentMatchResult = result;
 
             Debug.Log($"[SignalR] Joined lobby {result.LobbyId}");
-            Debug.Log($"[SignalR] Game Server: {result.GameServerIP}:{result.GameServerPort}");
 
             return result;
         }
@@ -204,6 +210,21 @@ public class MatchmakingClient : MonoBehaviour
 
     public async Task<bool> CancelMatchmakingAsync()
     {
+        if (_currentMatchResult == null || _currentMatchResult.LobbyId <= 0)
+        {
+            Debug.Log("[SignalR] No active lobby to cancel");
+            return true;
+        }
+
+        if (_connection.State != HubConnectionState.Connected)
+        {
+            bool connected = await ConnectAsync();
+            if (!connected)
+            {
+                return false;
+            }
+        }
+
         try
         {
             Debug.Log($"[SignalR] Cancelling matchmaking for lobby {_currentMatchResult.LobbyId}...");
@@ -211,7 +232,6 @@ public class MatchmakingClient : MonoBehaviour
             await _connection.InvokeAsync("LeaveLobby", _currentMatchResult.LobbyId);
 
             _currentMatchResult = null;
-            _currentLobbyId = null;
 
             Debug.Log("[SignalR] Matchmaking cancelled successfully");
             return true;
@@ -245,6 +265,7 @@ public class MatchmakingClient : MonoBehaviour
         {
             Debug.Log($"[SignalR] Completing match for lobby {lobbyId}...");
             await _connection.InvokeAsync("CompleteMatch", lobbyId);
+            _currentMatchResult = null;
             Debug.Log("[SignalR] Match completion reported");
             return true;
         }
@@ -258,7 +279,11 @@ public class MatchmakingClient : MonoBehaviour
 
     private async void OnDestroy()
     {
-        await DisconnectAsync();
+        if (Instance == this)
+        {
+            Instance = null;
+            await DisconnectAsync();
+        }
     }
 
     private async void OnApplicationQuit()

@@ -4,7 +4,7 @@ set -euo pipefail
 GAME_SERVER_BIN="${GAME_SERVER_BIN:-/home/ubuntu/opt/stupidguys/gameserver/allocation/StupidGuysServer.x86_64}"
 GAME_SERVER_HOST="${GAME_SERVER_HOST:-0.0.0.0}"
 USE_PLAYFAB_GSDK="${USE_PLAYFAB_GSDK:-false}"
-read -r -a PORTS <<< "${GAME_SERVER_PORTS:-7778 7779}"
+read -r -a PORTS <<< "${GAME_SERVER_PORTS:-7778}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-2}"
 LOG_DIR="${LOG_DIR:-$(pwd)/logs}"
 

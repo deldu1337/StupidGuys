@@ -23,9 +23,20 @@ public class MatchmakingView : MonoBehaviour
     {
         if (client == null)
         {
-            var go = new GameObject("MatchmakingClient");
-            client = go.AddComponent<MatchmakingClient>();
-            DontDestroyOnLoad(go);
+            if (MatchmakingClient.Instance != null)
+            {
+                client = MatchmakingClient.Instance;
+            }
+            else
+            {
+                var go = new GameObject("MatchmakingClient");
+                client = go.AddComponent<MatchmakingClient>();
+            }
+        }
+
+        if (client != null)
+        {
+            DontDestroyOnLoad(client.gameObject);
         }
 
         var _ = UnityMainThreadDispatcher.Instance;
@@ -150,8 +161,6 @@ public class MatchmakingView : MonoBehaviour
             client.OnError -= OnError;
             client.OnConnected -= OnConnected;
             client.OnDisconnected -= OnDisconnected;
-
-            _ = client.DisconnectAsync();
         }
 
         try
