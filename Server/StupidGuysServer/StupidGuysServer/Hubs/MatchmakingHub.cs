@@ -206,40 +206,47 @@ public class MatchmakingHub : Hub
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(_matchmakingSettings.TimeoutSeconds), cancellationTokenSource.Token);
+
+                while (!cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    bool allocated = await TryAllocateLobbyAsync(lobby);
+                    if (allocated)
+                    {
+                        return;
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationTokenSource.Token);
+                }
             }
             catch (TaskCanceledException)
             {
                 return;
             }
-
-            await TryAllocateLobbyAsync(lobby);
         });
     }
 
-    private async Task TryAllocateLobbyAsync(Lobby lobby)
+    private async Task<bool> TryAllocateLobbyAsync(Lobby lobby)
     {
         if (lobby.IsMatchFinalized || lobby.MemberCount == 0)
         {
-            return;
+            return false;
         }
 
         var elapsed = DateTime.UtcNow - lobby.CreatedAtUtc;
         if (!lobby.IsFull && elapsed.TotalSeconds < _matchmakingSettings.TimeoutSeconds)
         {
-            return;
+            return false;
         }
 
         if (!_gameServerAllocator.TryAllocate(out var port))
         {
-            await _hubContext.Clients.Group(GetLobbyGroupName(lobby.Id))
-                .SendAsync("MatchmakingError", "No available game server ports");
-            return;
+            return false;
         }
 
         if (!lobby.TryFinalizeMatch(_gameServerSettings.Host, port))
         {
             _gameServerAllocator.Release(port);
-            return;
+            return false;
         }
 
         lobby.AllocationCancellation?.Cancel();
@@ -256,6 +263,7 @@ public class MatchmakingHub : Hub
             .SendAsync("MatchAllocated", result);
 
         Console.WriteLine($"[SignalR] Allocated game server: {lobby.GameServerIP}:{lobby.GameServerPort} for lobby {lobby.Id}");
+        return true;
     }
 
     private string GetLobbyGroupName(int lobbyId)
