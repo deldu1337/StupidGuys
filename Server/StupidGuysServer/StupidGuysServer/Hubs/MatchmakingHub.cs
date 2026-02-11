@@ -165,14 +165,19 @@ public class MatchmakingHub : Hub
 
         var lobby = _lobbiesManager.GetLobby(lobbyId);
 
-        if (lobby == null || !lobby.IsGameServerAllocated)
+        if (lobby != null && lobby.IsGameServerAllocated)
         {
+            _gameServerAllocator.Release(lobby.GameServerPort);
+            _lobbiesManager.RemoveLobby(lobbyId);
             return Task.CompletedTask;
         }
 
-        _gameServerAllocator.Release(lobby.GameServerPort);
-        _lobbiesManager.RemoveLobby(lobbyId);
+        if (_matchmakingSettings.PortRangeStart == _matchmakingSettings.PortRangeEnd)
+        {
+            _gameServerAllocator.Release(_matchmakingSettings.PortRangeStart);
+        }
 
+        _lobbiesManager.RemoveLobby(lobbyId);
         return Task.CompletedTask;
     }
 

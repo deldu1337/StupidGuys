@@ -279,7 +279,6 @@ public class UIManager : MonoBehaviour
         if (matchCompletionReported)
             return;
 
-        matchCompletionReported = true;
         _ = ReportMatchCompletionAsync();
     }
 
@@ -306,6 +305,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+        matchCompletionReported = true;
         PlayerPrefs.DeleteKey("LobbyId");
         PlayerPrefs.Save();
     }
