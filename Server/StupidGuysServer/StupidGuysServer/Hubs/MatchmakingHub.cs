@@ -66,6 +66,12 @@ public class MatchmakingHub : Hub
         string connectionId = Context.ConnectionId;
         Console.WriteLine($"[SignalR] {connectionId} requested FindOrCreateLobby (maxPlayers: {maxPlayers})");
 
+        var removedLobby = _lobbiesManager.RemovePlayerFromAllLobbies(connectionId);
+        if (removedLobby != null)
+        {
+            await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(removedLobby.Id));
+        }
+
         var lobby = _lobbiesManager.FindAvailableLobby();
 
         if (lobby == null)

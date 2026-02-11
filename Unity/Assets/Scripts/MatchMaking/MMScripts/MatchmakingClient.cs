@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -101,6 +102,11 @@ public class MatchmakingClient : MonoBehaviour
 
         try
         {
+            if (_connection.State is HubConnectionState.Connecting or HubConnectionState.Reconnecting or HubConnectionState.Disconnecting)
+            {
+                await _connection.StopAsync();
+            }
+
             Debug.Log($"[SignalR] Connecting to {serverUrl}...");
             await _connection.StartAsync();
 
@@ -118,14 +124,11 @@ public class MatchmakingClient : MonoBehaviour
 
     public async Task<MatchmakingResultData> StartMatchmakingAsync()
     {
-        if (_connection.State != HubConnectionState.Connected)
+        bool connected = await ConnectAsync();
+        if (!connected)
         {
-            bool connected = await ConnectAsync();
-            if (!connected)
-            {
-                OnError?.Invoke("Not connected to server");
-                return null;
-            }
+            OnError?.Invoke("Not connected to server");
+            return null;
         }
 
         try
@@ -133,16 +136,48 @@ public class MatchmakingClient : MonoBehaviour
             _currentMatchResult = null;
             Debug.Log($"[SignalR] Requesting matchmaking (maxPlayers: {maxPlayers})...");
 
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var result = await _connection.InvokeAsync<MatchmakingResultData>(
                 "FindOrCreateLobby",
-                maxPlayers
+                maxPlayers,
+                cts.Token
             );
 
             _currentMatchResult = result;
-
             Debug.Log($"[SignalR] Joined lobby {result.LobbyId}");
-
             return result;
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.LogWarning("[SignalR] Matchmaking request timed out. Reconnecting and retrying once...");
+
+            await DisconnectAsync();
+            bool reconnected = await ConnectAsync();
+            if (!reconnected)
+            {
+                OnError?.Invoke("Matchmaking timeout and reconnect failed");
+                return null;
+            }
+
+            try
+            {
+                using var retryCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var retryResult = await _connection.InvokeAsync<MatchmakingResultData>(
+                    "FindOrCreateLobby",
+                    maxPlayers,
+                    retryCts.Token
+                );
+
+                _currentMatchResult = retryResult;
+                Debug.Log($"[SignalR] Joined lobby {retryResult.LobbyId} (retry)");
+                return retryResult;
+            }
+            catch (Exception retryEx)
+            {
+                Debug.LogError($"[SignalR] Matchmaking retry failed: {retryEx.Message}");
+                OnError?.Invoke($"Matchmaking retry failed: {retryEx.Message}");
+                return null;
+            }
         }
         catch (Exception ex)
         {
@@ -174,7 +209,7 @@ public class MatchmakingClient : MonoBehaviour
 
     public async Task DisconnectAsync()
     {
-        if (_connection.State == HubConnectionState.Connected)
+        if (_connection.State != HubConnectionState.Disconnected)
         {
             Debug.Log("[SignalR] Disconnecting...");
             await _connection.StopAsync();
@@ -216,23 +251,17 @@ public class MatchmakingClient : MonoBehaviour
             return true;
         }
 
-        if (_connection.State != HubConnectionState.Connected)
+        bool connected = await ConnectAsync();
+        if (!connected)
         {
-            bool connected = await ConnectAsync();
-            if (!connected)
-            {
-                return false;
-            }
+            return false;
         }
 
         try
         {
             Debug.Log($"[SignalR] Cancelling matchmaking for lobby {_currentMatchResult.LobbyId}...");
-
             await _connection.InvokeAsync("LeaveLobby", _currentMatchResult.LobbyId);
-
             _currentMatchResult = null;
-
             Debug.Log("[SignalR] Matchmaking cancelled successfully");
             return true;
         }
@@ -252,13 +281,10 @@ public class MatchmakingClient : MonoBehaviour
             return false;
         }
 
-        if (_connection.State != HubConnectionState.Connected)
+        bool connected = await ConnectAsync();
+        if (!connected)
         {
-            bool connected = await ConnectAsync();
-            if (!connected)
-            {
-                return false;
-            }
+            return false;
         }
 
         try
