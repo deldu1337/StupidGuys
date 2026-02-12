@@ -5,16 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Login/Auth.unity
     guid: 8237aa798c0cfd5418c0c2e6471d225b
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/MatchMaking/MatchMakingTestScene.unity
     guid: 320119cd9cf5ce744bebb49bb2257825
   - enabled: 1
     path: Assets/Scenes/InGame.unity
     guid: 6ca6dc5b3622db945b88c3f8fd0f9d4a
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Reward/StupidGuysRewardScene.unity
     guid: 7b997b0ff38b17f47b052314efdd0a4f
   - enabled: 0

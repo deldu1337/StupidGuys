@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("StupidGuysServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cef5b13e0e5a893c93b96fddfa4398720437a3b7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f078e48c1fab661948089fba6d538923dd2fa926")]
 [assembly: System.Reflection.AssemblyProductAttribute("StupidGuysServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StupidGuysServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

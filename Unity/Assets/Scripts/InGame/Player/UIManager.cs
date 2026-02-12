@@ -279,7 +279,6 @@ public class UIManager : MonoBehaviour
         if (matchCompletionReported)
             return;
 
-        matchCompletionReported = true;
         _ = ReportMatchCompletionAsync();
     }
 
@@ -292,7 +291,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        var matchmakingClient = FindAnyObjectByType<MatchmakingClient>();
+        var matchmakingClient = MatchmakingClient.Instance ?? FindAnyObjectByType<MatchmakingClient>();
         if (matchmakingClient == null)
         {
             Debug.LogWarning("[UI] MatchmakingClient not found for match completion");
@@ -303,7 +302,12 @@ public class UIManager : MonoBehaviour
         if (!completed)
         {
             Debug.LogWarning($"[UI] Failed to report match completion for lobby {lobbyId}");
+            return;
         }
+
+        matchCompletionReported = true;
+        PlayerPrefs.DeleteKey("LobbyId");
+        PlayerPrefs.Save();
     }
 
     /// <summary>

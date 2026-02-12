@@ -1,31 +1,29 @@
 ﻿using StupidGuysServer.Models;
 using System.Collections.Concurrent;
-using System.Linq;
 
 namespace StupidGuysServer.Services
 {
     public class LobbiesManager
     {
+        private const int FixedLobbyId = 1;
         private readonly ConcurrentDictionary<int, Lobby> _lobbies = new();
-        private int _nextLobbyId = 1;
-        private readonly object _idLock = new object();
 
         public Lobby? FindAvailableLobby()
         {
-            return _lobbies.Values.FirstOrDefault(lobby => !lobby.IsFull && !lobby.IsMatchFinalized);
+            if (_lobbies.TryGetValue(FixedLobbyId, out var lobby) &&
+                !lobby.IsFull &&
+                !lobby.IsMatchFinalized)
+            {
+                return lobby;
+            }
+
+            return null;
         }
 
         public Lobby CreateLobby(int maxPlayers)
         {
-            int lobbyId;
-            lock (_idLock)
-            {
-                lobbyId = _nextLobbyId++;
-            }
-
-            var lobby = new Lobby(lobbyId, maxPlayers);
-            _lobbies[lobbyId] = lobby;
-
+            var lobby = new Lobby(FixedLobbyId, maxPlayers);
+            _lobbies[FixedLobbyId] = lobby;
             return lobby;
         }
 
@@ -35,24 +33,15 @@ namespace StupidGuysServer.Services
             return lobby;
         }
 
+        // ✅ Finalized여도 제거는 허용해야 재매칭 가능
         public Lobby? RemovePlayerFromAllLobbies(string connectionId)
         {
-            foreach (var lobby in _lobbies.Values)
-            {
-                if (lobby.IsMatchFinalized)
-                {
-                    continue;
-                }
+            if (!_lobbies.TryGetValue(FixedLobbyId, out var lobby))
+                return null;
 
-                if (lobby.TryRemoveMember(connectionId, out int remainCount))
-                {
-                    if (remainCount == 0)
-                    {
-                        _lobbies.TryRemove(lobby.Id, out _);
-                    }
-                    return lobby;
-                }
-            }
+            if (lobby.TryRemoveMember(connectionId, out _))
+                return lobby;
+
             return null;
         }
 

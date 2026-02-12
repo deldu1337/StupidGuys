@@ -1,20 +1,20 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Microsoft.AspNetCore.SignalR.Client;
 
 public class MatchmakingClient : MonoBehaviour
 {
-    private const string MatchmakingServerUrlEnv = "3.37.215.9";
+    private const string DefaultServerUrl = "http://3.37.215.9:10000/matchmaking";
 
     [SerializeField] private string serverUrl = "";
-
     [SerializeField] private int maxPlayers = 6;
 
     private HubConnection _connection;
     private MatchmakingResultData _currentMatchResult;
 
-    private int? _currentLobbyId;
+    public static MatchmakingClient Instance { get; private set; }
 
     public event Action<LobbyStatusData> OnLobbyUpdated;
     public event Action<MatchmakingResultData> OnMatchAllocated;
@@ -26,7 +26,37 @@ public class MatchmakingClient : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        EnsureConnectionBuilt();
+    }
+
+    private string ResolveServerUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(serverUrl))
+            return serverUrl;
+
+        return DefaultServerUrl;
+    }
+
+    /// <summary>
+    /// ✅ _connection이 null(또는 깨진 상태)일 수 있으니, 모든 API 앞에서 보장.
+    /// 씬 왕복/도메인 리로드/오브젝트 재생성 꼬임에서도 복구됨.
+    /// </summary>
+    private void EnsureConnectionBuilt()
+    {
+        if (_connection != null)
+            return;
+
         serverUrl = ResolveServerUrl();
+
         _connection = new HubConnectionBuilder()
             .WithUrl(serverUrl)
             .WithAutomaticReconnect()
@@ -37,150 +67,178 @@ public class MatchmakingClient : MonoBehaviour
         _connection.Closed += OnConnectionClosed;
         _connection.Reconnecting += OnConnectionReconnecting;
         _connection.Reconnected += OnConnectionReconnected;
-    }
 
-    private string ResolveServerUrl()
-    {
-        if (!string.IsNullOrWhiteSpace(serverUrl))
-        {
-            return serverUrl;
-        }
-
-        var envUrl = Environment.GetEnvironmentVariable(MatchmakingServerUrlEnv);
-        if (!string.IsNullOrWhiteSpace(envUrl))
-        {
-            return envUrl;
-        }
-
-        return "http://3.37.215.9:10000/matchmaking";
+        Debug.Log("[SignalR] HubConnection built");
     }
 
     private void RegisterServerEvents()
     {
-        _connection.On<LobbyStatusData>("LobbyUpdated", (status) =>
+        _connection.On<LobbyStatusData>("LobbyUpdated", status =>
         {
             Debug.Log($"[SignalR] Lobby updated: {status.CurrentPlayers}/{status.MaxPlayers}");
-
-            UnityMainThreadDispatcher.Enqueue(() =>
-            {
-                OnLobbyUpdated?.Invoke(status);
-            });
+            UnityMainThreadDispatcher.Enqueue(() => OnLobbyUpdated?.Invoke(status));
         });
 
-        _connection.On<MatchmakingResultData>("MatchAllocated", (result) =>
+        _connection.On<MatchmakingResultData>("MatchAllocated", result =>
         {
-            Debug.Log($"[SignalR] Match allocated: {result.GameServerIP}:{result.GameServerPort}");
-
-            UnityMainThreadDispatcher.Enqueue(() =>
-            {
-                OnMatchAllocated?.Invoke(result);
-            });
+            Debug.Log($"[SignalR] Match allocated: {result.GameServerIP}:{result.GameServerPort} (lobby {result.LobbyId})");
+            _currentMatchResult = result;
+            UnityMainThreadDispatcher.Enqueue(() => OnMatchAllocated?.Invoke(result));
         });
 
-        _connection.On<string>("MatchmakingError", (message) =>
+        _connection.On<string>("MatchmakingError", message =>
         {
             Debug.LogError($"[SignalR] Matchmaking error: {message}");
-
-            UnityMainThreadDispatcher.Enqueue(() =>
-            {
-                OnError?.Invoke(message);
-            });
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke(message));
         });
     }
 
     public async Task<bool> ConnectAsync()
     {
-        if (_connection.State == HubConnectionState.Connected)
-        {
-            Debug.Log("[SignalR] Already connected");
-            return true;
-        }
-
         try
         {
-            Debug.Log($"[SignalR] Connecting to {serverUrl}...");
+            EnsureConnectionBuilt(); // ✅ 여기서 null 방지
+
+            Debug.Log($"[SignalR] ConnectAsync called, state={_connection.State}");
+
+            if (_connection.State == HubConnectionState.Connected)
+                return true;
+
+            // ✅ AutomaticReconnect와 충돌 방지: Connecting/Reconnecting이면 Stop/Start 하지 말고 기다림
+            if (_connection.State == HubConnectionState.Connecting ||
+                _connection.State == HubConnectionState.Reconnecting)
+            {
+                Debug.Log($"[SignalR] Waiting while {_connection.State}...");
+                for (int i = 0; i < 30; i++)
+                {
+                    await Task.Delay(100);
+                    if (_connection.State == HubConnectionState.Connected)
+                        return true;
+                }
+                return _connection.State == HubConnectionState.Connected;
+            }
+
+            // Disconnected 상태만 Start
+            Debug.Log($"[SignalR] Starting connection to {serverUrl}...");
             await _connection.StartAsync();
 
             Debug.Log("[SignalR] Connected!");
-            OnConnected?.Invoke();
+            UnityMainThreadDispatcher.Enqueue(() => OnConnected?.Invoke());
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[SignalR] Connection failed: {ex.Message}");
-            OnError?.Invoke($"Connection failed: {ex.Message}");
+            Debug.LogError($"[SignalR] Connection failed: {ex}");
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke($"Connection failed: {ex.Message}"));
             return false;
         }
     }
 
     public async Task<MatchmakingResultData> StartMatchmakingAsync()
     {
-        if (_connection.State != HubConnectionState.Connected)
-        {
-            Debug.LogError("[SignalR] Not connected to server!");
-            OnError?.Invoke("Not connected to server");
-            return null;
-        }
-
         try
         {
-            Debug.Log($"[SignalR] Requesting matchmaking (maxPlayers: {maxPlayers})...");
+            EnsureConnectionBuilt(); // ✅ 여기서 null 방지
+            Debug.Log($"[SignalR] StartMatchmakingAsync begin, state={_connection.State}");
+
+            bool connected = await ConnectAsync();
+            if (!connected)
+            {
+                UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke("Not connected to server"));
+                return null;
+            }
+
+            _currentMatchResult = null;
+
+            Debug.Log($"[SignalR] Invoking FindOrCreateLobby (maxPlayers={maxPlayers}) state={_connection.State}");
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             var result = await _connection.InvokeAsync<MatchmakingResultData>(
                 "FindOrCreateLobby",
-                maxPlayers
+                maxPlayers,
+                cts.Token
             );
 
             _currentMatchResult = result;
-
             Debug.Log($"[SignalR] Joined lobby {result.LobbyId}");
-            Debug.Log($"[SignalR] Game Server: {result.GameServerIP}:{result.GameServerPort}");
-
             return result;
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.LogWarning("[SignalR] Matchmaking request timed out");
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke("Matchmaking request timed out"));
+            return null;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[SignalR] Matchmaking failed: {ex.Message}");
-            OnError?.Invoke($"Matchmaking failed: {ex.Message}");
+            Debug.LogError($"[SignalR] Matchmaking failed: {ex}");
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke($"Matchmaking failed: {ex.Message}"));
             return null;
         }
     }
 
-    public async Task<LobbyStatusData> GetLobbyStatusAsync(int lobbyId)
+    public async Task<bool> CancelMatchmakingAsync()
     {
-        if (_connection.State != HubConnectionState.Connected)
+        EnsureConnectionBuilt();
+
+        if (_currentMatchResult == null || _currentMatchResult.LobbyId <= 0)
         {
-            Debug.LogError("[SignalR] Not connected!");
-            return null;
+            Debug.Log("[SignalR] No active lobby to cancel");
+            return true;
         }
+
+        bool connected = await ConnectAsync();
+        if (!connected) return false;
 
         try
         {
-            var status = await _connection.InvokeAsync<LobbyStatusData>("GetLobbyStatus", lobbyId);
-            return status;
+            Debug.Log($"[SignalR] Cancelling matchmaking for lobby {_currentMatchResult.LobbyId}...");
+            await _connection.InvokeAsync("LeaveLobby", _currentMatchResult.LobbyId);
+            _currentMatchResult = null;
+            Debug.Log("[SignalR] Matchmaking cancelled successfully");
+            return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[SignalR] Failed to get lobby status: {ex.Message}");
-            return null;
+            Debug.LogError($"[SignalR] Failed to cancel matchmaking: {ex}");
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke($"Failed to cancel: {ex.Message}"));
+            return false;
         }
     }
 
-    public async Task DisconnectAsync()
+    public async Task<bool> CompleteMatchAsync(int lobbyId)
     {
-        if (_connection.State == HubConnectionState.Connected)
+        EnsureConnectionBuilt();
+
+        if (lobbyId <= 0)
         {
-            Debug.Log("[SignalR] Disconnecting...");
-            await _connection.StopAsync();
+            Debug.LogWarning("[SignalR] Invalid lobby id for completion");
+            return false;
+        }
+
+        bool connected = await ConnectAsync();
+        if (!connected) return false;
+
+        try
+        {
+            Debug.Log($"[SignalR] Completing match for lobby {lobbyId}...");
+            await _connection.InvokeAsync("CompleteMatch", lobbyId);
+            _currentMatchResult = null;
+            Debug.Log("[SignalR] Match completion reported");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalR] Failed to complete match: {ex}");
+            UnityMainThreadDispatcher.Enqueue(() => OnError?.Invoke($"Failed to complete match: {ex.Message}"));
+            return false;
         }
     }
 
     private Task OnConnectionClosed(Exception exception)
     {
         Debug.LogWarning($"[SignalR] Connection closed: {exception?.Message ?? "Unknown"}");
-
-        UnityMainThreadDispatcher.Enqueue(() => { OnDisconnected?.Invoke(); });
-
+        UnityMainThreadDispatcher.Enqueue(() => OnDisconnected?.Invoke());
         return Task.CompletedTask;
     }
 
@@ -193,77 +251,31 @@ public class MatchmakingClient : MonoBehaviour
     private Task OnConnectionReconnected(string connectionId)
     {
         Debug.Log($"[SignalR] Reconnected! ConnectionId: {connectionId}");
-
-        UnityMainThreadDispatcher.Enqueue(() =>
-        {
-            OnConnected?.Invoke();
-        });
-
+        UnityMainThreadDispatcher.Enqueue(() => OnConnected?.Invoke());
         return Task.CompletedTask;
-    }
-
-    public async Task<bool> CancelMatchmakingAsync()
-    {
-        try
-        {
-            Debug.Log($"[SignalR] Cancelling matchmaking for lobby {_currentMatchResult.LobbyId}...");
-
-            await _connection.InvokeAsync("LeaveLobby", _currentMatchResult.LobbyId);
-
-            _currentMatchResult = null;
-            _currentLobbyId = null;
-
-            Debug.Log("[SignalR] Matchmaking cancelled successfully");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[SignalR] Failed to cancel matchmaking: {ex.Message}");
-            OnError?.Invoke($"Failed to cancel: {ex.Message}");
-            return false;
-        }
-    }
-
-    public async Task<bool> CompleteMatchAsync(int lobbyId)
-    {
-        if (lobbyId <= 0)
-        {
-            Debug.LogWarning("[SignalR] Invalid lobby id for completion");
-            return false;
-        }
-
-        if (_connection.State != HubConnectionState.Connected)
-        {
-            bool connected = await ConnectAsync();
-            if (!connected)
-            {
-                return false;
-            }
-        }
-
-        try
-        {
-            Debug.Log($"[SignalR] Completing match for lobby {lobbyId}...");
-            await _connection.InvokeAsync("CompleteMatch", lobbyId);
-            Debug.Log("[SignalR] Match completion reported");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[SignalR] Failed to complete match: {ex.Message}");
-            OnError?.Invoke($"Failed to complete match: {ex.Message}");
-            return false;
-        }
     }
 
     private async void OnDestroy()
     {
-        await DisconnectAsync();
+        if (Instance == this)
+            Instance = null;
+
+        if (_connection != null)
+        {
+            try { await _connection.StopAsync(); } catch { }
+            try { await _connection.DisposeAsync(); } catch { }
+            _connection = null;
+        }
     }
 
     private async void OnApplicationQuit()
     {
-        await DisconnectAsync();
+        if (_connection != null)
+        {
+            try { await _connection.StopAsync(); } catch { }
+            try { await _connection.DisposeAsync(); } catch { }
+            _connection = null;
+        }
     }
 }
 

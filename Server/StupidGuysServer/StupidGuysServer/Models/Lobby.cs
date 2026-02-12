@@ -10,9 +10,13 @@ namespace StupidGuysServer.Models
         private readonly HashSet<string> _members = new();
         private bool _allocationTimerStarted;
 
+        // ✅ cleanup(Release/Remove) 중복 방지용
+        private int _cleanupOnce = 0;
+
         public int Id { get; }
         public int MaxPlayers { get; }
         public DateTime CreatedAtUtc { get; }
+
         public string? GameServerIP { get; set; }
         public int GameServerPort { get; set; }
         public bool IsGameServerAllocated { get; set; }
@@ -28,30 +32,25 @@ namespace StupidGuysServer.Models
 
         public int MemberCount
         {
-            get
-            {
-                lock (_gate)
-                {
-                    return _members.Count;
-                }
-            }
+            get { lock (_gate) return _members.Count; }
         }
 
         public bool IsFull
         {
-            get
-            {
-                lock (_gate)
-                {
-                    return _members.Count >= MaxPlayers;
-                }
-            }
+            get { lock (_gate) return _members.Count >= MaxPlayers; }
+        }
+
+        // ✅ 정리 루틴(Release/Remove)을 딱 1번만 실행하게 가드
+        public bool TryBeginCleanup()
+        {
+            return Interlocked.CompareExchange(ref _cleanupOnce, 1, 0) == 0;
         }
 
         public bool TryAddMember(string connectionId, out int remainMemberCount)
         {
             lock (_gate)
             {
+                // ✅ Finalized 된 로비에는 새 멤버 추가 금지
                 if (IsMatchFinalized)
                 {
                     remainMemberCount = 0;
@@ -85,9 +84,7 @@ namespace StupidGuysServer.Models
             lock (_gate)
             {
                 if (_allocationTimerStarted)
-                {
                     return false;
-                }
 
                 _allocationTimerStarted = true;
                 AllocationCancellation = cancellationTokenSource;
@@ -100,9 +97,7 @@ namespace StupidGuysServer.Models
             lock (_gate)
             {
                 if (IsMatchFinalized)
-                {
                     return false;
-                }
 
                 GameServerIP = host;
                 GameServerPort = port;

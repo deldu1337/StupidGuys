@@ -1,8 +1,4 @@
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\StupidGuysServer.exe
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\web.config
@@ -10,18 +6,6 @@ C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysSer
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\web.config
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\web.config
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\web.config
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.deps.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.runtimeconfig.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.deps.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.runtimeconfig.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.deps.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.runtimeconfig.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.deps.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.runtimeconfig.json
-C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.deps.json
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.runtimeconfig.json
 C:\Users\deldu\Documents\GitHub\StupidGuys\Server\StupidGuysServer\StupidGuysServer\publish\publish\publish\publish\publish\publish\publish\publish\StupidGuysServer.staticwebassets.endpoints.json
