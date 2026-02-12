@@ -21,12 +21,11 @@ public class MatchmakingView : MonoBehaviour
 
     private void Awake()
     {
+        client = MatchmakingClient.Instance != null ? MatchmakingClient.Instance : client;
+
         if (client == null)
         {
-            if (MatchmakingClient.Instance != null)
-            {
-                client = MatchmakingClient.Instance;
-            }
+            if (MatchmakingClient.Instance != null) client = MatchmakingClient.Instance;
             else
             {
                 var go = new GameObject("MatchmakingClient");
@@ -34,18 +33,16 @@ public class MatchmakingView : MonoBehaviour
             }
         }
 
-        if (client != null)
-        {
-            DontDestroyOnLoad(client.gameObject);
-        }
+        if (client != null) DontDestroyOnLoad(client.gameObject);
 
         var _ = UnityMainThreadDispatcher.Instance;
     }
 
     private void Start()
     {
-        bool isServer = MultiplayerRolesManager.ActiveMultiplayerRoleMask.HasFlag(MultiplayerRoleFlags.Server);
+        Debug.Log("[UI] MatchmakingView Start");
 
+        bool isServer = MultiplayerRolesManager.ActiveMultiplayerRoleMask.HasFlag(MultiplayerRoleFlags.Server);
         if (isServer)
         {
             SceneManager.LoadScene("InGame");
@@ -56,80 +53,98 @@ public class MatchmakingView : MonoBehaviour
         UpdateLobbyInfo("");
         SetLoading(false);
 
+        Debug.Log($"[UI] findBtn null? {_findMatchButton == null}, cancelBtn null? {_cancelMatchButton == null}");
+
         _findMatchButton.onClick.AddListener(OnFindMatchButtonClicked);
         _cancelMatchButton.onClick.AddListener(OnCancelMatchButtonClicked);
 
-        if (client != null)
-        {
-            client.OnLobbyUpdated += OnLobbyUpdated;
-            client.OnMatchAllocated += OnMatchAllocated;
-            client.OnError += OnError;
-            client.OnConnected += OnConnected;
-            client.OnDisconnected += OnDisconnected;
+        client.OnLobbyUpdated += OnLobbyUpdated;
+        client.OnMatchAllocated += OnMatchAllocated;
+        client.OnError += OnError;
+        client.OnConnected += OnConnected;
+        client.OnDisconnected += OnDisconnected;
 
-            _ = ConnectToServerAsync();
-        }
+        _ = ConnectToServerAsync();
     }
 
     private async Task ConnectToServerAsync()
     {
         UpdateStatus("Connecting to server...");
+        SetLoading(true);
 
         bool success = await client.ConnectAsync();
 
-        if (success)
-        {
-            UpdateStatus("Connected! Click 'Find Match' to start");
-        }
-        else
-        {
-            UpdateStatus("Failed to connect to server");
-        }
+        SetLoading(false);
+        UpdateStatus(success ? "Connected! Click 'Find Match' to start" : "Failed to connect to server");
+        _findMatchButton.interactable = true;
     }
 
     private async void OnFindMatchButtonClicked()
     {
+        Debug.Log("[UI] FindMatch clicked");
+
+        _findMatchButton.interactable = false;
+        _matchResult = null;
+
         UpdateStatus("Searching for match...");
         UpdateLobbyInfo("");
         SetLoading(true);
 
-        var result = await client.StartMatchmakingAsync();
+        try
+        {
+            var result = await client.StartMatchmakingAsync();
 
-        if (result != null && result.Success)
-        {
-            _matchResult = result;
-            UpdateStatus($"Joined lobby #{result.LobbyId}");
+            if (result != null && result.Success)
+            {
+                _matchResult = result;
+                UpdateStatus($"Joined lobby #{result.LobbyId}");
+            }
+            else
+            {
+                UpdateStatus("Failed to find match");
+            }
         }
-        else
+        catch (System.Exception ex)
         {
-            UpdateStatus("Failed to find match");
+            Debug.LogError($"[UI] FindMatch exception: {ex}");
+            UpdateStatus($"Error: {ex.Message}");
+        }
+        finally
+        {
+            if (_matchResult == null || !_matchResult.Success)
+                SetLoading(false);
+
             _findMatchButton.interactable = true;
         }
     }
 
     private async void OnCancelMatchButtonClicked()
     {
+        Debug.Log("[UI] Cancel clicked");
+
         UpdateStatus("Cancelling matchmaking...");
+        SetLoading(true);
 
-        bool success = await client.CancelMatchmakingAsync();
-        if (success)
+        try
         {
-            UpdateStatus("Matchmaking cancelled");
+            bool success = await client.CancelMatchmakingAsync();
+            UpdateStatus(success ? "Matchmaking cancelled" : "Failed to cancel matchmaking");
         }
-        else
+        catch (System.Exception ex)
         {
-            UpdateStatus("Failed to cancel matchmaking");
+            Debug.LogError($"[UI] Cancel exception: {ex}");
+            UpdateStatus($"Cancel error: {ex.Message}");
         }
-
-        SetLoading(false);
+        finally
+        {
+            SetLoading(false);
+        }
     }
 
     private void OnLobbyUpdated(LobbyStatusData status)
     {
         Debug.Log($"[UI] Lobby updated: {status.CurrentPlayers}/{status.MaxPlayers}");
-
         UpdateLobbyInfo($"Players: {status.CurrentPlayers}/{status.MaxPlayers}");
-
         UpdateStatus($"Waiting for players... ({status.CurrentPlayers}/{status.MaxPlayers})");
     }
 
@@ -141,6 +156,7 @@ public class MatchmakingView : MonoBehaviour
         {
             Debug.LogError("[MatchmakingView] No server info in allocation result!");
             UpdateStatus("Error: No server info");
+            SetLoading(false);
             return;
         }
 
@@ -149,30 +165,18 @@ public class MatchmakingView : MonoBehaviour
         PlayerPrefs.SetInt("LobbyId", result.LobbyId);
         PlayerPrefs.Save();
 
-        Debug.Log($"[MatchmakingView] Loading game with server: {result.GameServerIP}:{result.GameServerPort}");
-
         UpdateStatus("Match found! Loading game...");
         UpdateLobbyInfo($"Lobby #{result.LobbyId} - Ready!");
+        SetLoading(false);
 
-        if (client != null)
-        {
-            client.OnLobbyUpdated -= OnLobbyUpdated;
-            client.OnMatchAllocated -= OnMatchAllocated;
-            client.OnError -= OnError;
-            client.OnConnected -= OnConnected;
-            client.OnDisconnected -= OnDisconnected;
-        }
+        // 씬 넘어가기 전 구독 해제
+        client.OnLobbyUpdated -= OnLobbyUpdated;
+        client.OnMatchAllocated -= OnMatchAllocated;
+        client.OnError -= OnError;
+        client.OnConnected -= OnConnected;
+        client.OnDisconnected -= OnDisconnected;
 
-        try
-        {
-            SceneManager.LoadScene("InGame");
-            Debug.Log("[MatchmakingView] Scene load initiated");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[MatchmakingView] Failed to load scene: {e.Message}");
-            UpdateStatus($"Error loading scene: {e.Message}");
-        }
+        SceneManager.LoadScene("InGame");
     }
 
     private void OnError(string message)
@@ -185,42 +189,34 @@ public class MatchmakingView : MonoBehaviour
 
     private void OnConnected()
     {
-        Debug.Log("[UI] Connected to server");
+        Debug.Log("[UI] Connected");
         UpdateStatus("Connected! Click 'Find Match' to start");
         _findMatchButton.interactable = true;
     }
 
     private void OnDisconnected()
     {
-        Debug.LogWarning("[UI] Disconnected from server");
+        Debug.LogWarning("[UI] Disconnected");
         UpdateStatus("Disconnected from server. Reconnecting...");
         _findMatchButton.interactable = false;
     }
 
     private void UpdateStatus(string message)
     {
-        if (statusText != null)
-        {
-            statusText.text = message;
-        }
+        if (statusText != null) statusText.text = message;
         Debug.Log($"[Status] {message}");
     }
 
     private void UpdateLobbyInfo(string info)
     {
-        if (lobbyInfoText != null)
-        {
-            lobbyInfoText.text = info;
-        }
+        if (lobbyInfoText != null) lobbyInfoText.text = info;
     }
 
     private void SetLoading(bool isLoading)
     {
-        if (loadingIndicator != null)
-        {
-            loadingIndicator.SetActive(isLoading);
-        }
+        if (loadingIndicator != null) loadingIndicator.SetActive(isLoading);
     }
+
     private void OnDestroy()
     {
         if (client != null)
@@ -233,8 +229,9 @@ public class MatchmakingView : MonoBehaviour
         }
 
         if (_findMatchButton != null)
-        {
             _findMatchButton.onClick.RemoveListener(OnFindMatchButtonClicked);
-        }
+
+        if (_cancelMatchButton != null)
+            _cancelMatchButton.onClick.RemoveListener(OnCancelMatchButtonClicked);
     }
 }

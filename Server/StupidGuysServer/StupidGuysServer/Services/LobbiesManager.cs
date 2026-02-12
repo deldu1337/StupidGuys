@@ -6,12 +6,13 @@ namespace StupidGuysServer.Services
     public class LobbiesManager
     {
         private const int FixedLobbyId = 1;
-
         private readonly ConcurrentDictionary<int, Lobby> _lobbies = new();
 
         public Lobby? FindAvailableLobby()
         {
-            if (_lobbies.TryGetValue(FixedLobbyId, out var lobby) && !lobby.IsFull && !lobby.IsMatchFinalized)
+            if (_lobbies.TryGetValue(FixedLobbyId, out var lobby) &&
+                !lobby.IsFull &&
+                !lobby.IsMatchFinalized)
             {
                 return lobby;
             }
@@ -32,27 +33,14 @@ namespace StupidGuysServer.Services
             return lobby;
         }
 
+        // ✅ Finalized여도 제거는 허용해야 재매칭 가능
         public Lobby? RemovePlayerFromAllLobbies(string connectionId)
         {
             if (!_lobbies.TryGetValue(FixedLobbyId, out var lobby))
-            {
                 return null;
-            }
 
-            if (lobby.IsMatchFinalized)
-            {
-                return null;
-            }
-
-            if (lobby.TryRemoveMember(connectionId, out int remainCount))
-            {
-                if (remainCount == 0)
-                {
-                    _lobbies.TryRemove(FixedLobbyId, out _);
-                }
-
+            if (lobby.TryRemoveMember(connectionId, out _))
                 return lobby;
-            }
 
             return null;
         }

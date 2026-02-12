@@ -3,6 +3,7 @@ using StupidGuysServer.Configuration;
 using StupidGuysServer.Models;
 using StupidGuysServer.Services;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class MatchmakingHub : Hub
@@ -29,8 +30,7 @@ public class MatchmakingHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        string connectionId = Context.ConnectionId;
-        Console.WriteLine($"[SignalR] Client connected: {connectionId}");
+        Console.WriteLine($"[SignalR] Client connected: {Context.ConnectionId}");
         await base.OnConnectedAsync();
     }
 
@@ -40,22 +40,11 @@ public class MatchmakingHub : Hub
         Console.WriteLine($"[SignalR] Client disconnected: {connectionId}");
 
         var lobby = _lobbiesManager.RemovePlayerFromAllLobbies(connectionId);
-
         if (lobby != null)
         {
-            Console.WriteLine($"[SignalR] Removed {connectionId} from lobby {lobby.Id}");
-
-            if (lobby.MemberCount == 0)
-            {
-                lobby.AllocationCancellation?.Cancel();
-
-                if (lobby.IsGameServerAllocated)
-                {
-                    _gameServerAllocator.Release(lobby.GameServerPort);
-                }
-            }
-
+            await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(lobby.Id));
             await NotifyLobbyUpdated(lobby);
+            await CleanupLobbyIfEmptyAsync(lobby);
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -66,27 +55,28 @@ public class MatchmakingHub : Hub
         string connectionId = Context.ConnectionId;
         Console.WriteLine($"[SignalR] {connectionId} requested FindOrCreateLobby (maxPlayers: {maxPlayers})");
 
+        // ✅ 혹시 남아있던 멤버 상태를 먼저 제거
         var removedLobby = _lobbiesManager.RemovePlayerFromAllLobbies(connectionId);
         if (removedLobby != null)
         {
             await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(removedLobby.Id));
+            await NotifyLobbyUpdated(removedLobby);
+            await CleanupLobbyIfEmptyAsync(removedLobby);
         }
 
         var lobby = _lobbiesManager.FindAvailableLobby();
-
         if (lobby == null)
         {
             lobby = _lobbiesManager.CreateLobby(maxPlayers);
             Console.WriteLine($"[SignalR] Created new lobby {lobby.Id}");
-
             StartAllocationTimer(lobby);
         }
 
-        if (lobby.TryAddMember(connectionId, out int remainMemberCount))
+        if (lobby.TryAddMember(connectionId, out _))
         {
             await Groups.AddToGroupAsync(connectionId, GetLobbyGroupName(lobby.Id));
 
-            Console.WriteLine($"[SignalR] {connectionId} joined lobby {lobby.Id} ({lobby.MemberCount}/{maxPlayers})");
+            Console.WriteLine($"[SignalR] {connectionId} joined lobby {lobby.Id} ({lobby.MemberCount}/{lobby.MaxPlayers})");
 
             await NotifyLobbyUpdated(lobby);
 
@@ -103,21 +93,16 @@ public class MatchmakingHub : Hub
                 Success = true
             };
         }
-        else
-        {
-            Console.WriteLine($"[SignalR] Failed to add {connectionId} to lobby {lobby.Id}");
-            throw new HubException("Failed to join lobby");
-        }
+
+        Console.WriteLine($"[SignalR] Failed to add {connectionId} to lobby {lobby.Id}");
+        throw new HubException("Failed to join lobby");
     }
 
     public LobbyStatus GetLobbyStatus(int lobbyId)
     {
         var lobby = _lobbiesManager.GetLobby(lobbyId);
-
         if (lobby == null)
-        {
             throw new HubException($"Lobby {lobbyId} not found");
-        }
 
         return new LobbyStatus
         {
@@ -134,57 +119,32 @@ public class MatchmakingHub : Hub
         Console.WriteLine($"[SignalR] {connectionId} requested LeaveLobby ({lobbyId})");
 
         var lobby = _lobbiesManager.GetLobby(lobbyId);
-
         if (lobby == null)
-        {
             return;
-        }
 
-        if (lobby.IsMatchFinalized)
-        {
-            return;
-        }
-
-        if (lobby.TryRemoveMember(connectionId, out int remainCount))
+        if (lobby.TryRemoveMember(connectionId, out _))
         {
             await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(lobby.Id));
-
-            if (remainCount == 0)
-            {
-                lobby.AllocationCancellation?.Cancel();
-
-                if (lobby.IsGameServerAllocated)
-                {
-                    _gameServerAllocator.Release(lobby.GameServerPort);
-                }
-
-                _lobbiesManager.RemoveLobby(lobby.Id);
-            }
-
             await NotifyLobbyUpdated(lobby);
+            await CleanupLobbyIfEmptyAsync(lobby);
         }
     }
 
-    public Task CompleteMatch(int lobbyId)
+    public async Task CompleteMatch(int lobbyId)
     {
-        Console.WriteLine($"[SignalR] Completing match for lobby {lobbyId}");
+        string connectionId = Context.ConnectionId;
+        Console.WriteLine($"[SignalR] Completing match for lobby {lobbyId} by {connectionId}");
 
         var lobby = _lobbiesManager.GetLobby(lobbyId);
+        if (lobby == null)
+            return;
 
-        if (lobby != null && lobby.IsGameServerAllocated)
-        {
-            _gameServerAllocator.Release(lobby.GameServerPort);
-            _lobbiesManager.RemoveLobby(lobbyId);
-            return Task.CompletedTask;
-        }
+        // ✅ 완료 보고한 클라는 즉시 멤버 제거(재매칭 가능)
+        lobby.TryRemoveMember(connectionId, out _);
+        await Groups.RemoveFromGroupAsync(connectionId, GetLobbyGroupName(lobby.Id));
 
-        if (_matchmakingSettings.PortRangeStart == _matchmakingSettings.PortRangeEnd)
-        {
-            _gameServerAllocator.Release(_matchmakingSettings.PortRangeStart);
-        }
-
-        _lobbiesManager.RemoveLobby(lobbyId);
-        return Task.CompletedTask;
+        await NotifyLobbyUpdated(lobby);
+        await CleanupLobbyIfEmptyAsync(lobby);
     }
 
     private async Task NotifyLobbyUpdated(Lobby lobby)
@@ -205,10 +165,10 @@ public class MatchmakingHub : Hub
 
     private void StartAllocationTimer(Lobby lobby)
     {
-        var cancellationTokenSource = new System.Threading.CancellationTokenSource();
-        if (!lobby.TryStartAllocationTimer(cancellationTokenSource))
+        var cts = new CancellationTokenSource();
+        if (!lobby.TryStartAllocationTimer(cts))
         {
-            cancellationTokenSource.Dispose();
+            cts.Dispose();
             return;
         }
 
@@ -216,22 +176,20 @@ public class MatchmakingHub : Hub
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(_matchmakingSettings.TimeoutSeconds), cancellationTokenSource.Token);
+                await Task.Delay(TimeSpan.FromSeconds(_matchmakingSettings.TimeoutSeconds), cts.Token);
 
-                while (!cancellationTokenSource.Token.IsCancellationRequested)
+                while (!cts.Token.IsCancellationRequested)
                 {
                     bool allocated = await TryAllocateLobbyAsync(lobby);
                     if (allocated)
-                    {
                         return;
-                    }
 
-                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationTokenSource.Token);
+                    await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
                 }
             }
             catch (TaskCanceledException)
             {
-                return;
+                // ignore
             }
         });
     }
@@ -239,20 +197,14 @@ public class MatchmakingHub : Hub
     private async Task<bool> TryAllocateLobbyAsync(Lobby lobby)
     {
         if (lobby.IsMatchFinalized || lobby.MemberCount == 0)
-        {
             return false;
-        }
 
         var elapsed = DateTime.UtcNow - lobby.CreatedAtUtc;
         if (!lobby.IsFull && elapsed.TotalSeconds < _matchmakingSettings.TimeoutSeconds)
-        {
             return false;
-        }
 
         if (!_gameServerAllocator.TryAllocate(out var port))
-        {
             return false;
-        }
 
         if (!lobby.TryFinalizeMatch(_gameServerSettings.Host, port))
         {
@@ -277,10 +229,30 @@ public class MatchmakingHub : Hub
         return true;
     }
 
-    private string GetLobbyGroupName(int lobbyId)
+    // ✅ Release/Remove는 여기서만, 딱 1번만
+    private async Task CleanupLobbyIfEmptyAsync(Lobby lobby)
     {
-        return $"lobby_{lobbyId}";
+        if (lobby.MemberCount != 0)
+            return;
+
+        if (!lobby.TryBeginCleanup())
+            return;
+
+        lobby.AllocationCancellation?.Cancel();
+
+        if (lobby.IsGameServerAllocated)
+        {
+            _gameServerAllocator.Release(lobby.GameServerPort);
+            Console.WriteLine($"[SignalR] Released port {lobby.GameServerPort} for lobby {lobby.Id}");
+        }
+
+        _lobbiesManager.RemoveLobby(lobby.Id);
+        Console.WriteLine($"[SignalR] Removed lobby {lobby.Id}");
+
+        await Task.CompletedTask;
     }
+
+    private string GetLobbyGroupName(int lobbyId) => $"lobby_{lobbyId}";
 }
 
 public class LobbyStatus

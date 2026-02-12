@@ -382,7 +382,7 @@ public class InGameManager : NetworkBehaviour
             string command =
                 $"cd '{exeDir}' && " +
                 $"GAME_SERVER_HOST='{host}' GAME_SERVER_PORT='{port}' USE_PLAYFAB_GSDK='{usePlayFab}' " +
-                $"nohup '{current}' -port {port} -logFile run{port}.log >/dev/null 2>&1 &";
+                $"nohup '{current}' -port {port} -logFile run_{port}.log >/dev/null 2>&1 &";
 
             var psi = new System.Diagnostics.ProcessStartInfo
             {
