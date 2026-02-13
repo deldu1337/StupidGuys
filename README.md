@@ -3,7 +3,6 @@
 
 ## EC2 디렉토리 구조
 
-```text
 /home/ubuntu/opt/stupidguys/
 ├─ tcpchat/                      # TCP 채팅 서버
 │  ├─ TCPChat.x86_64              # 빌드 결과물
