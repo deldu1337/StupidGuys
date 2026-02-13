@@ -401,7 +401,7 @@ GAME_SERVER_BIN="${GAME_SERVER_BIN:-/home/ubuntu/opt/stupidguys/gameserver/alloc
 GAME_SERVER_HOST="${GAME_SERVER_HOST:-0.0.0.0}"
 USE_PLAYFAB_GSDK="${USE_PLAYFAB_GSDK:-false}"
 
-# ✅ 7778만 사용
+# 7778만 사용
 PORTS=(7778)
 
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-2}"
@@ -409,7 +409,7 @@ RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-2}"
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="${LOG_DIR:-$BASE_DIR/logs}"
 
-# ✅ 7778 전용 파일명으로 분리
+# 7778 전용 파일명으로 분리
 PID_FILE="${PID_FILE:-$LOG_DIR/watchdog_7778.pid}"
 WATCHDOG_OUT="${WATCHDOG_OUT:-$LOG_DIR/watchdog_7778.out}"
 
@@ -632,7 +632,7 @@ stop_server_7778() {
 stop_by_pidfile
 stop_server_7778
 
-echo "✅ stop done"
+echo "stop done"
 ```
 
 ### 6) 실행 및 확인
