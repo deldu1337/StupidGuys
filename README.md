@@ -1,8 +1,7 @@
-````md
 # StupidGuys EC2 배포 가이드
 
 ## EC2 디렉토리 구조
-
+````md
 /home/ubuntu/opt/stupidguys/
 ├─ tcpchat/                      # TCP 채팅 서버
 │  ├─ TCPChat.x86_64              # 빌드 결과물
